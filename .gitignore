@@ -1,0 +1,11 @@
+# Build
+/diorama
+/obj/
+/test_movement
+
+# User settings (written at runtime)
+/settings.dat
+
+# Blender backups
+*.blend1
+*.blend2
