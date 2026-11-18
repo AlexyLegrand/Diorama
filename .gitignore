@@ -1,5 +1,7 @@
 # Build
 /diorama
+/diorama.exe
+/test_movement.exe
 /obj/
 /test_movement
 

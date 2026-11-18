@@ -25,12 +25,24 @@ SRC     = $(SRC_DIR)/main.c \
 OBJ     = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 DEP     = $(OBJ:.o=.d)
 
-CFLAGS  = -Wall -Wextra -std=c99 -g -I$(SRC_DIR) -I/usr/local/include -MMD -MP
+ifeq ($(OS),Windows_NT)
+# Windows: MSYS2 UCRT64 (pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-raylib make)
+EXE     = .exe
+INCS    =
+LDFLAGS = -lraylib -lglfw3 -lopengl32 -lgdi32 -lwinmm -lm
+else
+# Linux / X11: raylib installed in /usr/local
+EXE     =
+INCS    = -I/usr/local/include
 LDFLAGS = -L/usr/local/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+endif
 
-all: $(NAME)
+BIN     = $(NAME)$(EXE)
+CFLAGS  = -Wall -Wextra -std=c99 -g -I$(SRC_DIR) $(INCS) -MMD -MP
 
-$(NAME): $(OBJ)
+all: $(BIN)
+
+$(BIN): $(OBJ)
 	$(CC) $(OBJ) -o $@ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -41,18 +53,18 @@ TEST_SRC = tests/test_movement.c $(SRC_DIR)/core/settings.c $(SRC_DIR)/world/lev
            $(SRC_DIR)/world/blocktype.c $(SRC_DIR)/render/block_render.c $(SRC_DIR)/render/lighting.c
 
 test:
-	$(CC) -Wall -Wextra -std=c99 -g -I$(SRC_DIR) -I/usr/local/include $(TEST_SRC) -o test_movement $(LDFLAGS)
-	./test_movement
-	rm -f test_movement
+	$(CC) -Wall -Wextra -std=c99 -g -I$(SRC_DIR) $(INCS) $(TEST_SRC) -o test_movement$(EXE) $(LDFLAGS)
+	./test_movement$(EXE)
+	rm -f test_movement$(EXE)
 
-run: $(NAME)
-	./$(NAME)
+run: $(BIN)
+	./$(BIN)
 
 clean:
 	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(BIN)
 
 re: fclean all
 
