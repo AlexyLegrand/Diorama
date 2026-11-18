@@ -11,6 +11,10 @@
 
 static const int FPS_MARGIN = 20;
 static const int FPS_WIDTH = 100;
+static const char *LOADING_TEXT = "Chargement...";
+static const int LOADING_FONT_SIZE = 30;
+static const int LOADING_MARGIN = 40;
+static const float LOADING_TEXT_MIN_FADE = 0.6f;
 
 static void draw_world(const Level *level, const Player *player, const CrankAnim *crank)
 {
@@ -70,6 +74,21 @@ static void draw_overlay(const Game *g, Camera3D camera)
     }
 }
 
+static void draw_transition(const Game *g)
+{
+    float fade = game_fade(g);
+
+    if (fade <= 0.0f) {
+        return;
+    }
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, fade));
+    if (fade >= LOADING_TEXT_MIN_FADE) {
+        int width = MeasureText(LOADING_TEXT, LOADING_FONT_SIZE);
+        DrawText(LOADING_TEXT, GetScreenWidth() - width - LOADING_MARGIN,
+                 GetScreenHeight() - LOADING_FONT_SIZE - LOADING_MARGIN, LOADING_FONT_SIZE, Fade(RAYWHITE, fade));
+    }
+}
+
 void game_draw(Game *g)
 {
     bool in_menu = g->state == STATE_TITLE || g->state == STATE_SETTINGS;
@@ -83,6 +102,7 @@ void game_draw(Game *g)
     EndMode3D();
     sky_draw_vignette();
     draw_overlay(g, camera);
+    draw_transition(g);
     EndDrawing();
 }
 

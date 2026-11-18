@@ -25,6 +25,13 @@ typedef enum {
     TITLE_COUNT
 } TitleItem;
 
+typedef enum {
+    TRANSITION_NONE,
+    TRANSITION_OUT,
+    TRANSITION_HOLD,
+    TRANSITION_IN
+} TransitionPhase;
+
 typedef struct {
     GameState state;
     Level title_scene;
@@ -44,6 +51,13 @@ typedef struct {
     int settings_selected;
     int settings_waiting;
     bool quit;
+    Music menu_music;
+    Music map_music;
+    Music level_music[LEVEL_COUNT];
+    TransitionPhase transition;
+    float transition_time;
+    GameState next_state;
+    int next_level;
 } Game;
 
 bool game_init(Game *g);
@@ -53,5 +67,7 @@ void game_update(Game *g);
 void game_draw(Game *g);
 
 void game_unload(Game *g);
+
+float game_fade(const Game *g);
 
 #endif
