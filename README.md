@@ -4,12 +4,30 @@ A 3D voxel puzzle game written in C99 with [raylib](https://www.raylib.com/).
 Guide Sprout through small floating dioramas: push crates, climb stairs and ladders,
 turn cranks to move platforms, and reach the golden seed.
 
+See [contexte.md](contexte.md) (in French) for the game concept, its mechanics and what is
+available so far.
+
 ## Build and run
 
-Requirements: `gcc`, `make` and raylib installed in `/usr/local` (Linux / X11).
+### Linux
+
+Requirements: `gcc`, `make` and raylib installed in `/usr/local` (X11).
+
+### Windows
+
+Requirements: [MSYS2](https://www.msys2.org/). In the **MSYS2 UCRT64** terminal, install the toolchain once:
 
 ```sh
-make        # build ./diorama
+pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-raylib make
+```
+
+Then build from the MSYS2 UCRT64 terminal (the binary is `diorama.exe` and needs the
+MSYS2 DLLs, so launch it from there rather than by double-clicking).
+
+### Commands
+
+```sh
+make        # build ./diorama (diorama.exe on Windows)
 make run    # build and launch
 make test   # movement tests
 make clean  # remove obj/ (fclean also removes the binary)
@@ -19,16 +37,25 @@ Run the game from the project root (it loads `levels/` and `assets/` with relati
 
 ## Controls
 
-| Action | Default key |
-|---|---|
-| Move | W A S D (Z Q S D on AZERTY) |
-| Restart level | R |
-| Rotate camera / navigate menus | Arrow keys |
-| Confirm / enter a level | Enter or Space |
-| Back | Escape |
+| Action | Default key | Mouse |
+|---|---|---|
+| Move | W A S D (Z Q S D on AZERTY) | |
+| Restart level | R | |
+| Rotate / tilt camera | Arrow keys | |
+| Zoom | | Wheel |
+| Navigate menus | Arrow keys | Hover |
+| Confirm / enter a level | Enter or Space | Left click (menus) |
+| Back | Escape | Right click (settings) |
 
-Movement and restart keys can be rebound in **Settings**.
-Settings are saved to `settings.dat`.
+Settings (saved to `settings.dat`): volume, fullscreen, FPS counter, mouse on/off in menus,
+and rebindable movement and restart keys.
+
+## Music
+
+| File | When |
+|---|---|
+| `assets/music/world/diorama_ambiance.wav` | Title and settings screens |
+| `assets/music/world/diorama_ambiance_version_longue.wav` | World map and levels (keeps playing between them) |
 
 ## Structure
 
