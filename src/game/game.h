@@ -52,8 +52,7 @@ typedef struct {
     int settings_waiting;
     bool quit;
     Music menu_music;
-    Music map_music;
-    Music level_music[LEVEL_COUNT];
+    Music world_music;
     TransitionPhase transition;
     float transition_time;
     GameState next_state;

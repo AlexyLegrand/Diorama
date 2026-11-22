@@ -5,7 +5,8 @@
 
 const char *glfwGetKeyName(int key, int scancode);
 
-#define SETTINGS_VERSION 2
+#define SETTINGS_VERSION 3
+#define SETTINGS_VERSION_NO_MOUSE 2
 
 static const char *SETTINGS_PATH = "settings.dat";
 static const float DEFAULT_VOLUME = 0.8f;
@@ -31,7 +32,17 @@ typedef struct {
     bool fullscreen;
     bool show_fps;
     int keys[ACTION_COUNT];
+    bool mouse;
 } Settings;
+
+/* Layout of settings.dat before the mouse option (version 2), kept to migrate it. */
+typedef struct {
+    int version;
+    float volume;
+    bool fullscreen;
+    bool show_fps;
+    int keys[ACTION_COUNT];
+} SettingsNoMouse;
 
 static Settings _settings;
 
@@ -42,6 +53,7 @@ static void reset_defaults(void)
     _settings.fullscreen = false;
     _settings.show_fps = false;
     memcpy(_settings.keys, DEFAULT_KEYS, sizeof(_settings.keys));
+    _settings.mouse = true;
 }
 
 static bool is_valid(const Settings *s)
@@ -63,7 +75,18 @@ void settings_load(void)
     unsigned char *data = FileExists(SETTINGS_PATH) ? LoadFileData(SETTINGS_PATH, &size) : NULL;
 
     reset_defaults();
-    if (data != NULL && size == (int)sizeof(Settings) && is_valid((const Settings *)data)) {
+    if (data != NULL && size == (int)sizeof(SettingsNoMouse)
+        && ((const SettingsNoMouse *)data)->version == SETTINGS_VERSION_NO_MOUSE) {
+        const SettingsNoMouse *old = (const SettingsNoMouse *)data;
+        Settings migrated = _settings;
+        migrated.volume = old->volume;
+        migrated.fullscreen = old->fullscreen;
+        migrated.show_fps = old->show_fps;
+        memcpy(migrated.keys, old->keys, sizeof(migrated.keys));
+        if (is_valid(&migrated)) {
+            _settings = migrated;
+        }
+    } else if (data != NULL && size == (int)sizeof(Settings) && is_valid((const Settings *)data)) {
         memcpy(&_settings, data, sizeof(Settings));
     } else if (data != NULL) {
         TraceLog(LOG_WARNING, "SETTINGS: %s is invalid, using defaults", SETTINGS_PATH);
@@ -128,6 +151,16 @@ bool settings_show_fps(void)
 void settings_toggle_show_fps(void)
 {
     _settings.show_fps = !_settings.show_fps;
+}
+
+bool settings_mouse_enabled(void)
+{
+    return _settings.mouse;
+}
+
+void settings_toggle_mouse(void)
+{
+    _settings.mouse = !_settings.mouse;
 }
 
 const char *settings_action_name(Action action)

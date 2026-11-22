@@ -12,13 +12,7 @@
 #define SKY_PATH_MAX 64
 
 static const char *MENU_MUSIC_PATH = "assets/music/world/diorama_ambiance.wav";
-static const char *MAP_MUSIC_PATH = "assets/music/tracks/world_map.mp3";
-static const char *LEVEL_MUSIC_PATHS[LEVEL_COUNT] = {
-    "assets/music/tracks/level_1.mp3",
-    "assets/music/tracks/level_2.mp3",
-    "assets/music/tracks/level_3.mp3",
-    "assets/music/tracks/level_4.mp3",
-};
+static const char *WORLD_MUSIC_PATH = "assets/music/world/diorama_ambiance_version_longue.wav";
 static const float FADE_OUT_DURATION = 1.0f;
 static const float FADE_HOLD_DURATION = 0.4f;
 static const float FADE_IN_DURATION = 1.2f;
@@ -147,10 +141,7 @@ bool game_init(Game *g)
     g->title_selected = TITLE_PLAY;
     g->settings_waiting = NOT_WAITING;
     g->menu_music = LoadMusicStream(MENU_MUSIC_PATH);
-    g->map_music = LoadMusicStream(MAP_MUSIC_PATH);
-    for (int i = 0; i < LEVEL_COUNT; i++) {
-        g->level_music[i] = LoadMusicStream(LEVEL_MUSIC_PATHS[i]);
-    }
+    g->world_music = LoadMusicStream(WORLD_MUSIC_PATH);
     return true;
 }
 
@@ -225,6 +216,7 @@ static void update_title(Game *g, bool back, bool confirm)
 {
     g->title_selected = ui_navigate(g->title_selected, TITLE_COUNT);
     g->title_orbit.yaw += TITLE_ORBIT_SPEED * GetFrameTime();
+    confirm = confirm || (g->transition == TRANSITION_NONE && ui_menu_clicked(TITLE_COUNT));
     if (confirm && g->title_selected == TITLE_PLAY) {
         begin_transition(g, STATE_MAP, -1);
     } else if (confirm && g->title_selected == TITLE_SETTINGS) {
@@ -278,12 +270,10 @@ static void update_music(Game *g)
 {
     float volume = 1.0f - game_fade(g);
 
-    play_music_while(g->menu_music, g->state == STATE_TITLE || g->state == STATE_SETTINGS, volume);
-    play_music_while(g->map_music, g->state == STATE_MAP, volume);
-    for (int i = 0; i < LEVEL_COUNT; i++) {
-        bool in_level = (g->state == STATE_PLAYING || g->state == STATE_WON) && g->level_index == i;
-        play_music_while(g->level_music[i], in_level, volume);
-    }
+    bool in_menu = g->state == STATE_TITLE || g->state == STATE_SETTINGS;
+
+    play_music_while(g->menu_music, in_menu, volume);
+    play_music_while(g->world_music, !in_menu, volume);
 }
 
 void game_update(Game *g)
@@ -325,9 +315,6 @@ void game_unload(Game *g)
     player_unload(&g->player);
     player_unload(&g->title_player);
     UnloadMusicStream(g->menu_music);
-    UnloadMusicStream(g->map_music);
-    for (int i = 0; i < LEVEL_COUNT; i++) {
-        UnloadMusicStream(g->level_music[i]);
-    }
+    UnloadMusicStream(g->world_music);
     unload_assets();
 }

@@ -71,6 +71,54 @@ static void draw_panel(int x, int y, int width, int height)
     DrawRectangleRounded((Rectangle){ x, y, width, height }, PANEL_ROUNDNESS, PANEL_SEGMENTS, PANEL_COLOR);
 }
 
+typedef struct {
+    int item_size;
+    int spacing;
+    int panel_x;
+    int panel_y;
+    int panel_w;
+    int panel_h;
+    int top;
+} MenuLayout;
+
+static MenuLayout menu_layout(int count)
+{
+    bool compact = count > COMPACT_THRESHOLD;
+    MenuLayout m;
+
+    m.item_size = compact ? COMPACT_ITEM_SIZE : ITEM_SIZE;
+    m.spacing = compact ? COMPACT_ITEM_SPACING : ITEM_SPACING;
+    m.panel_w = compact ? COMPACT_PANEL_WIDTH : PANEL_WIDTH;
+    m.panel_h = count * m.spacing + PANEL_PADDING;
+    m.panel_x = GetScreenWidth() / 2 - m.panel_w / 2;
+    m.panel_y = GetScreenHeight() / 2 - m.panel_h / 2 + m.spacing;
+    m.top = m.panel_y + PANEL_PADDING;
+    return m;
+}
+
+int ui_menu_hovered(int count)
+{
+    if (!settings_mouse_enabled()) {
+        return -1;
+    }
+    MenuLayout m = menu_layout(count);
+    Vector2 mouse = GetMousePosition();
+
+    for (int i = 0; i < count; i++) {
+        Rectangle row = { m.panel_x, m.top + i * m.spacing - (m.spacing - m.item_size) / 2,
+                          m.panel_w, m.spacing };
+        if (CheckCollisionPointRec(mouse, row)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+bool ui_menu_clicked(int count)
+{
+    return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && ui_menu_hovered(count) >= 0;
+}
+
 int ui_navigate(int selected, int count)
 {
     if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
@@ -79,7 +127,10 @@ int ui_navigate(int selected, int count)
     if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
         return (selected + count - 1) % count;
     }
-    return selected;
+    Vector2 delta = GetMouseDelta();
+    bool mouse_active = delta.x != 0.0f || delta.y != 0.0f || IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    int hovered = mouse_active ? ui_menu_hovered(count) : -1;
+    return hovered >= 0 ? hovered : selected;
 }
 
 bool ui_confirm_pressed(void)
@@ -89,19 +140,17 @@ bool ui_confirm_pressed(void)
 
 void ui_draw_menu(const char *title, const char *const labels[], int count, int selected, const char *hint)
 {
-    bool compact = count > COMPACT_THRESHOLD;
-    int item_size = compact ? COMPACT_ITEM_SIZE : ITEM_SIZE;
-    int spacing = compact ? COMPACT_ITEM_SPACING : ITEM_SPACING;
-    int panel_w = compact ? COMPACT_PANEL_WIDTH : PANEL_WIDTH;
+    MenuLayout m = menu_layout(count);
+    int item_size = m.item_size;
+    int spacing = m.spacing;
+    int panel_w = m.panel_w;
+    int panel_x = m.panel_x;
+    int top = m.top;
     int screen_w = GetScreenWidth();
-    int panel_h = count * spacing + PANEL_PADDING;
-    int panel_x = screen_w / 2 - panel_w / 2;
-    int panel_y = GetScreenHeight() / 2 - panel_h / 2 + spacing;
-    int top = panel_y + PANEL_PADDING;
     float pulse = sinf((float)GetTime() * PULSE_SPEED) * PULSE_AMOUNT;
 
     draw_centered(title, TITLE_Y, TITLE_SIZE, GOLD);
-    draw_panel(panel_x, panel_y, panel_w, panel_h);
+    draw_panel(panel_x, m.panel_y, panel_w, m.panel_h);
     for (int i = 0; i < count; i++) {
         int item_y = top + i * spacing;
         if (i != selected) {

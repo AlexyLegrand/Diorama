@@ -61,7 +61,8 @@ static void draw_overlay(const Game *g, Camera3D camera)
     if (g->state == STATE_TITLE) {
         const char *labels[TITLE_COUNT] = { "Jouer", "Parametres", "Quitter" };
         ui_draw_menu("Diorama", labels, TITLE_COUNT, g->title_selected,
-                     "Haut/Bas : choisir   Entree : valider   Echap : quitter");
+                     settings_mouse_enabled() ? "Haut/Bas : choisir   Entree / clic : valider   Echap : quitter"
+                                              : "Haut/Bas : choisir   Entree : valider   Echap : quitter");
     } else if (g->state == STATE_SETTINGS) {
         settings_menu_draw(g->settings_selected, g->settings_waiting);
     } else if (g->state == STATE_MAP) {

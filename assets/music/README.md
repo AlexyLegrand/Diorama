@@ -2,14 +2,12 @@
 
 Drop the `.mp3` files here using these names.
 
-## tracks/ — looping music
+## Music (looping, in world/)
 
 | File | When |
 |---|---|
-| `title.mp3` | Title and settings screens |
-| `world_map.mp3` | World map |
-| `level.mp3` | Levels (or `level_1.mp3` … `level_4.mp3`, one per level) |
-| `victory.mp3` | Short jingle when the golden seed is collected |
+| `world/diorama_ambiance.wav` | Title and settings screens |
+| `world/diorama_ambiance_version_longue.wav` | Everywhere after the title menu (world map and levels) |
 
 ## player/ — Sprout animations
 

@@ -32,6 +32,10 @@ bool settings_show_fps(void);
 
 void settings_toggle_show_fps(void);
 
+bool settings_mouse_enabled(void);
+
+void settings_toggle_mouse(void);
+
 const char *settings_action_name(Action action);
 
 const char *settings_key_name(int key);
