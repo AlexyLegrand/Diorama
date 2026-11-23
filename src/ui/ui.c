@@ -150,7 +150,9 @@ void ui_draw_menu(const char *title, const char *const labels[], int count, int 
     int screen_w = GetScreenWidth();
     float pulse = sinf((float)GetTime() * PULSE_SPEED) * PULSE_AMOUNT;
 
-    draw_centered(title, TITLE_Y, TITLE_SIZE, GOLD);
+    if (title != NULL) {
+        draw_centered(title, TITLE_Y, TITLE_SIZE, GOLD);
+    }
     draw_panel(panel_x, m.panel_y, panel_w, m.panel_h);
     for (int i = 0; i < count; i++) {
         int item_y = top + i * spacing;

@@ -6,6 +6,7 @@
 #include "render/lighting.h"
 #include "render/vegetation.h"
 #include "render/sky.h"
+#include "render/title_logo.h"
 #include "ui/ui.h"
 #include "ui/settings_menu.h"
 
@@ -48,6 +49,7 @@ static void draw_scene(Game *g, bool in_menu, Camera3D camera)
         level_draw(&g->title_scene, NULL, false);
         vegetation_draw(&g->title_scene);
         player_draw(&g->title_player);
+        title_logo_draw(scene_center);
     } else {
         draw_world(&g->level, &g->player, &g->crank);
     }
@@ -84,7 +86,7 @@ static void draw_overlay(const Game *g, Camera3D camera)
 {
     if (g->state == STATE_TITLE) {
         const char *labels[TITLE_COUNT] = { "Jouer", "Parametres", "Quitter" };
-        ui_draw_menu("Diorama", labels, TITLE_COUNT, g->title_selected,
+        ui_draw_menu(NULL, labels, TITLE_COUNT, g->title_selected,
                      settings_mouse_enabled() ? "Haut/Bas : choisir   Entree / clic : valider   Echap : quitter"
                                               : "Haut/Bas : choisir   Entree : valider   Echap : quitter");
     } else if (g->state == STATE_SETTINGS) {

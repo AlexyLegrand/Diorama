@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include "raylib.h"
@@ -6,6 +7,7 @@
 #include "render/block_render.h"
 #include "render/lighting.h"
 #include "render/vegetation.h"
+#include "render/title_logo.h"
 #include "ui/ui.h"
 #include "ui/settings_menu.h"
 
@@ -18,7 +20,11 @@ static const char *WORLD_MUSIC_PATH = "assets/music/world/diorama_ambiance_versi
 static const float FADE_OUT_DURATION = 1.0f;
 static const float FADE_HOLD_DURATION = 0.4f;
 static const float FADE_IN_DURATION = 1.2f;
-static const float TITLE_ORBIT_SPEED = 0.15f;
+static const float TITLE_YAW = 90.0f * DEG2RAD;
+static const float TITLE_SWAY_ANGLE = 12.0f * DEG2RAD;
+static const float TITLE_SWAY_SPEED = 0.25f;
+static const float TITLE_PITCH = 22.0f * DEG2RAD;
+static const float TITLE_TARGET_RAISE = 0.6f;
 static const float TITLE_CAMERA_DISTANCE = 7.0f;
 
 static bool start_level(const char *path, Level *level, Player *player, OrbitCamera *orbit, CrankAnim *crank)
@@ -122,6 +128,7 @@ static void update_world(Game *g)
 
 static void unload_assets(void)
 {
+    title_logo_unload();
     backdrop_assets_unload();
     vegetation_unload();
     block_render_unload();
@@ -173,10 +180,16 @@ static int saved_world(const Game *g)
     return (world >= 0 && world < g->world_count) ? world : 0;
 }
 
+static void sway_title_camera(Game *g)
+{
+    g->title_orbit.yaw = TITLE_YAW + sinf((float)GetTime() * TITLE_SWAY_SPEED) * TITLE_SWAY_ANGLE;
+}
+
 bool game_init(Game *g)
 {
     lighting_load();
     block_render_load();
+    title_logo_load();
     vegetation_load();
     backdrop_assets_load();
     progress_load(&g->progress);
@@ -198,6 +211,9 @@ bool game_init(Game *g)
     g->title_player = player_load(t->start_x, t->start_y, t->start_z, DIR_SOUTH);
     g->title_orbit = orbit_camera_init(level_center(t));
     g->title_orbit.distance = TITLE_CAMERA_DISTANCE;
+    g->title_orbit.pitch = TITLE_PITCH;
+    g->title_orbit.target.y += TITLE_TARGET_RAISE;
+    sway_title_camera(g);
     g->state = STATE_TITLE;
     g->title_selected = TITLE_PLAY;
     g->settings_waiting = NOT_WAITING;
@@ -315,7 +331,7 @@ float game_fade(const Game *g)
 static void update_title(Game *g, bool back, bool confirm)
 {
     g->title_selected = ui_navigate(g->title_selected, TITLE_COUNT);
-    g->title_orbit.yaw += TITLE_ORBIT_SPEED * GetFrameTime();
+    sway_title_camera(g);
     confirm = confirm || (g->transition == TRANSITION_NONE && ui_menu_clicked(TITLE_COUNT));
     if (confirm && g->title_selected == TITLE_PLAY) {
         begin_transition(g, STATE_MAP, -1);
@@ -400,7 +416,7 @@ void game_update(Game *g)
         update_title(g, back, confirm);
         break;
     case STATE_SETTINGS:
-        g->title_orbit.yaw += TITLE_ORBIT_SPEED * GetFrameTime();
+        sway_title_camera(g);
         if (settings_menu_update(&g->settings_selected, &g->settings_waiting)) {
             g->state = STATE_TITLE;
         }

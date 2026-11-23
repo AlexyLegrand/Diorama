@@ -16,6 +16,7 @@ SRC     = $(SRC_DIR)/main.c \
           $(SRC_DIR)/render/vegetation.c \
           $(SRC_DIR)/render/sky.c \
           $(SRC_DIR)/render/backdrop.c \
+          $(SRC_DIR)/render/title_logo.c \
           $(SRC_DIR)/entities/player.c \
           $(SRC_DIR)/entities/crank.c \
           $(SRC_DIR)/ui/ui.c \
