@@ -203,6 +203,24 @@ static void test_world_2_level_2(void)
     assert(!platform_rotate(&trap, player, &move));
 }
 
+static void test_world_2_level_3(void)
+{
+    Level level;
+    assert(level_load(&level, "levels/world_2/level_3.txt"));
+    assert(level.width == 12 && level.height == 10 && level.depth == 12);
+    Pos pos = walk(&level, start_of(&level), "EEEEEEEEEESSSSSSSSSSS");
+    assert(pos.x == 10 && pos.y == 1 && pos.z == 11);
+    pos = walk(&level, pos, "E");
+    assert(pos.x == 11 && pos.y == 9 && pos.z == 11);
+    assert(level.cells[pos.y][pos.x][pos.z].type == BLOCK_STAR);
+
+    Level push;
+    assert(level_load(&push, "levels/world_2/level_3.txt"));
+    pos = walk(&push, start_of(&push), "SSEEEEEEEEEE");
+    assert(pos.x == 10 && pos.z == 2);
+    assert(push.cells[1][11][2].type == BLOCK_CRATE);
+}
+
 static void test_worlds_are_complete(void)
 {
     WorldInfo worlds[WORLD_MAX];
@@ -225,6 +243,18 @@ static void test_worlds_are_complete(void)
             assert(level_load(&level, path));
         }
     }
+}
+
+static void test_level_size_limits(void)
+{
+    Level level;
+    assert(level_load(&level, "tests/levels/max_size.txt"));
+    assert(level.width == LEVEL_MAX_WIDTH && level.height == LEVEL_MAX_HEIGHT && level.depth == LEVEL_MAX_DEPTH);
+    Pos pos = walk(&level, start_of(&level), "EEEEEEEEEEESSSSSSSSSSS");
+    assert(pos.x == LEVEL_MAX_WIDTH - 1 && pos.z == LEVEL_MAX_DEPTH - 1);
+    assert(!level_load(&level, "tests/levels/too_wide.txt"));
+    assert(!level_load(&level, "tests/levels/too_high.txt"));
+    assert(!level_load(&level, "tests/levels/too_deep.txt"));
 }
 
 static void test_key_rebind_swaps_conflict(void)
@@ -250,7 +280,9 @@ int main(void)
     test_world_1_portal();
     test_world_2_level_1();
     test_world_2_level_2();
+    test_world_2_level_3();
     test_worlds_are_complete();
+    test_level_size_limits();
     test_key_rebind_swaps_conflict();
     printf("movement tests OK\n");
     return 0;

@@ -33,7 +33,7 @@ Les transitions entre la carte et les niveaux se font par un fondu au noir.
 
 ### Monde en grille
 
-Tout le monde est une grille 3D de cellules (au maximum 8 × 6 × 8). Sprout se déplace **case par case**,
+Tout le monde est une grille 3D de cellules (au maximum 12 de large × 10 de haut × 12 de profondeur). Sprout se déplace **case par case**,
 dans les quatre directions. Il ne peut se tenir que sur une case vide posée sur un bloc
 « marchable » (sol, caisse, plateforme). Il n'y a ni saut ni chute libre pour le joueur.
 
@@ -92,6 +92,7 @@ Les mondes sont listés dans `levels/worlds.txt`, un dossier par monde.
 |---|---|
 | Niveau 1 | Deux tranchées, deux caisses : aligner la première caisse avant de la pousser |
 | Niveau 2 | Tourner le pont avant de pousser la caisse dessus, sinon le niveau est bloqué |
+| Niveau 3 | Niveau de test à la taille maximale (12 × 10 × 12) : longue traversée puis grande échelle |
 
 En plus des niveaux : une **carte** par monde, reliées par des portails, et une **scène de titre**.
 
@@ -117,13 +118,18 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - `diorama_ambiance_version_longue.wav` : musique de la carte et des niveaux. Elle continue
   sans repartir de zéro entre la carte et les niveaux.
 - Les musiques baissent en fondu pendant les transitions.
-- Pas encore d'effets sonores. La liste des sons prévus se trouve dans `assets/music/README.md`.
+- Effets sonores (`assets/music/player`, `world`, `ui`) : pas (4 variantes tirées au hasard), échelle
+  (un son par étage), début de poussée et frottement continu de la caisse, chute de caisse, manivelle et rotation continue des plateformes, butée contre un obstacle,
+  victoire et graine récoltée, navigation et validation dans les menus, volume, touche assignée,
+  entrée de niveau, niveau verrouillé, transition, recommencer, monde débloqué.
+- Ambiance de vent en boucle, discrète, sur la carte et dans les niveaux.
+- Pas encore utilisés : `push.mp3`, `seed_idle.mp3` (scintillement de la graine) et `bird.mp3` (oiseau).
 
 ### Menus et paramètres
 
 - Menus utilisables au clavier, et à la souris (survol, clic, clic droit pour revenir dans les paramètres).
 - Progression (niveaux terminés, monde en cours) sauvegardée dans `progress.dat`.
-- Paramètres sauvegardés dans `settings.dat` : volume, plein écran, affichage des FPS,
+- Paramètres sauvegardés dans `settings.dat` : volume de la musique, volume des effets sonores, plein écran, affichage des FPS,
   souris activée ou non, touches de déplacement et de recommencement modifiables
   (avec retour aux touches par défaut).
 
@@ -136,8 +142,7 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 
 ## Limites actuelles et pistes
 
-- Seulement 6 niveaux sur 2 mondes. Ajouter un niveau ou un monde ne demande que des fichiers (voir le README).
+- Seulement 7 niveaux sur 2 mondes. Ajouter un niveau ou un monde ne demande que des fichiers (voir le README).
 - Les thèmes des mondes se limitent au ciel : pas encore de blocs ni de végétation propres à chaque monde.
-- Pas encore d'effets sonores (pas, caisse, manivelle, interface...).
 - La souris ne sert que dans les menus et pour le zoom : pas de clic sur la carte, ni de caméra à la souris.
 - Pas d'annulation de coup : seul « recommencer le niveau » existe.

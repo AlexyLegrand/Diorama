@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "ui/ui.h"
 #include "core/settings.h"
+#include "core/sfx.h"
 
 static const int TITLE_SIZE = 80;
 static const int TITLE_Y = 80;
@@ -120,7 +121,7 @@ bool ui_menu_clicked(int count)
     return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && ui_menu_hovered(count) >= 0;
 }
 
-int ui_navigate(int selected, int count)
+static int navigate(int selected, int count)
 {
     if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
         return (selected + 1) % count;
@@ -132,6 +133,16 @@ int ui_navigate(int selected, int count)
     bool mouse_active = delta.x != 0.0f || delta.y != 0.0f || IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     int hovered = mouse_active ? ui_menu_hovered(count) : -1;
     return hovered >= 0 ? hovered : selected;
+}
+
+int ui_navigate(int selected, int count)
+{
+    int next = navigate(selected, count);
+
+    if (next != selected) {
+        sfx_play(SFX_UI_MOVE);
+    }
+    return next;
 }
 
 bool ui_confirm_pressed(void)

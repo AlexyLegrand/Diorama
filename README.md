@@ -47,7 +47,7 @@ Run the game from the project root (it loads `levels/` and `assets/` with relati
 | Confirm / enter a level | Enter or Space | Left click (menus) |
 | Back | Escape | Right click (settings) |
 
-Settings (saved to `settings.dat`; game progress goes to `progress.dat`): volume, fullscreen, FPS counter, mouse on/off in menus,
+Settings (saved to `settings.dat`; game progress goes to `progress.dat`): music volume, sound effects volume, fullscreen, FPS counter, mouse on/off in menus,
 and rebindable movement and restart keys.
 
 ## Music
@@ -75,7 +75,7 @@ tests/        unit tests
 ## Level format
 
 A level `levels/<name>.txt` stacks horizontal layers separated by a blank line,
-from bottom to top. Each layer is a grid of characters (max 8×6×8).
+from bottom to top. Each layer is a grid of characters (max 12 wide × 10 high × 12 deep).
 
 | Char | Block | Char | Vegetation |
 |---|---|---|---|

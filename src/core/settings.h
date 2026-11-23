@@ -12,6 +12,12 @@ typedef enum {
     ACTION_COUNT
 } Action;
 
+typedef enum {
+    VOLUME_MUSIC,
+    VOLUME_SFX,
+    VOLUME_COUNT
+} VolumeKind;
+
 void settings_load(void);
 
 void settings_save(void);
@@ -22,9 +28,9 @@ void settings_set_key(Action action, int key);
 
 void settings_reset_keys(void);
 
-float settings_volume(void);
+float settings_volume(VolumeKind kind);
 
-void settings_change_volume(float delta);
+void settings_change_volume(VolumeKind kind, float delta);
 
 void settings_toggle_fullscreen(void);
 

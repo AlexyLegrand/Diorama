@@ -24,7 +24,8 @@ SRC     = $(SRC_DIR)/main.c \
           $(SRC_DIR)/game/game.c \
           $(SRC_DIR)/game/game_draw.c \
           $(SRC_DIR)/game/world.c \
-          $(SRC_DIR)/core/progress.c
+          $(SRC_DIR)/core/progress.c \
+          $(SRC_DIR)/core/sfx.c
 OBJ     = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 DEP     = $(OBJ:.o=.d)
 

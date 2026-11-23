@@ -1,7 +1,8 @@
 # Audio
 
-The game uses two music tracks (below). The other tables list the sound effects still to make:
-drop the `.mp3` files in the matching folder using these names.
+The game uses two music tracks and the sound effects below; a missing file is simply silent.
+Not used yet: `player/push.mp3`, `world/seed_idle.mp3` and `world/bird.mp3`.
+`world/crate_slide.mp3` and `world/platform_move.mp3` loop while the crate or platform moves.
 
 ## Music (looping, in world/)
 

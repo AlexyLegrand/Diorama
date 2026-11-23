@@ -4,11 +4,11 @@
 #include <stdbool.h>
 #include "world/blocktype.h"
 
-#define LEVEL_MAX_WIDTH  8
-#define LEVEL_MAX_HEIGHT 6
-#define LEVEL_MAX_DEPTH  8
+#define LEVEL_MAX_WIDTH  12
+#define LEVEL_MAX_HEIGHT 10
+#define LEVEL_MAX_DEPTH  12
 #define LEVEL_MAX_ENTRANCES 9
-#define LEVEL_MAX_DECOR 128
+#define LEVEL_MAX_DECOR 256
 
 typedef enum {
     VEG_TREE_ROUND,

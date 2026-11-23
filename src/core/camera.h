@@ -16,6 +16,8 @@ OrbitCamera orbit_camera_init(Vector3 target);
 
 void orbit_camera_update(OrbitCamera *oc);
 
+void orbit_camera_fit(OrbitCamera *oc, Vector3 size);
+
 float orbit_camera_snapped_yaw(const OrbitCamera *oc);
 
 Camera3D orbit_camera_to_raylib(const OrbitCamera *oc);

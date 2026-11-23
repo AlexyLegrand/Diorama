@@ -87,10 +87,11 @@ Chaque question indique la proposition faite, la réponse donnée et son statut.
 
 ## Technique et accessibilité
 
-### Q14 — Agrandir la grille ❓
+### Q14 — Agrandir la grille ✅
 - **Proposé** : relever la limite de 8×6×8 à 12×10×12 (constantes `LEVEL_MAX_*` dans `src/world/level.h`).
   Le coût est négligeable, et on laisse la porte ouverte à des niveaux plus grands et aux collectibles.
-- **Réponse** : —
+- **Réponse** : oui, l'objectif est de pouvoir faire des niveaux plus grands, en hauteur comme en largeur et en profondeur.
+- **Appliqué** : limite à 12 × 10 × 12. La caméra recule automatiquement selon la taille du niveau.
 
 ### Q16 — Manette ❓
 - **Proposé** : support manette (stick ou croix pour marcher, caméra au stick droit ou aux gâchettes,

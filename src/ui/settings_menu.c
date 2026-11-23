@@ -3,9 +3,11 @@
 #include "core/settings.h"
 #include "ui/ui.h"
 #include "ui/settings_menu.h"
+#include "core/sfx.h"
 
 typedef enum {
-    SETTINGS_VOLUME,
+    SETTINGS_MUSIC_VOLUME,
+    SETTINGS_SFX_VOLUME,
     SETTINGS_FULLSCREEN,
     SETTINGS_SHOW_FPS,
     SETTINGS_MOUSE,
@@ -30,37 +32,59 @@ static bool back_pressed(void)
         || (settings_mouse_enabled() && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT));
 }
 
+static int volume_kind(int item)
+{
+    if (item == SETTINGS_MUSIC_VOLUME) {
+        return VOLUME_MUSIC;
+    }
+    return item == SETTINGS_SFX_VOLUME ? VOLUME_SFX : -1;
+}
+
+static void change_volume(VolumeKind kind, bool louder)
+{
+    settings_change_volume(kind, louder ? VOLUME_STEP : -VOLUME_STEP);
+    settings_save();
+    sfx_play(SFX_UI_VOLUME);
+}
+
+static int percent(VolumeKind kind)
+{
+    return (int)(settings_volume(kind) * 100.0f + 0.5f);
+}
+
 bool settings_menu_update(int *selected, int *waiting)
 {
     if (*waiting != NOT_WAITING) {
         int key = GetKeyPressed();
         if (key == KEY_ESCAPE || (key == KEY_NULL && back_pressed())) {
             *waiting = NOT_WAITING;
+            sfx_play(SFX_UI_BACK);
         } else if (key != KEY_NULL && !is_reserved_key(key)) {
             settings_set_key((Action)*waiting, key);
             settings_save();
             *waiting = NOT_WAITING;
+            sfx_play(SFX_UI_KEY_BOUND);
         }
         return false;
     }
     *selected = ui_navigate(*selected, SETTINGS_COUNT);
     bool clicked = ui_menu_clicked(SETTINGS_COUNT);
-    if (*selected == SETTINGS_VOLUME && (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT))) {
-        settings_change_volume(IsKeyPressed(KEY_RIGHT) ? VOLUME_STEP : -VOLUME_STEP);
-        settings_save();
+    int volume = volume_kind(*selected);
+    if (volume >= 0 && (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT))) {
+        change_volume((VolumeKind)volume, IsKeyPressed(KEY_RIGHT));
     }
-    if (clicked && *selected == SETTINGS_VOLUME) {
-        bool louder = GetMousePosition().x >= GetScreenWidth() / 2.0f;
-        settings_change_volume(louder ? VOLUME_STEP : -VOLUME_STEP);
-        settings_save();
+    if (clicked && volume >= 0) {
+        change_volume((VolumeKind)volume, GetMousePosition().x >= GetScreenWidth() / 2.0f);
         return false;
     }
     if (back_pressed()) {
+        sfx_play(SFX_UI_BACK);
         return true;
     }
     if (!ui_confirm_pressed() && !clicked) {
         return false;
     }
+    sfx_play(*selected == SETTINGS_BACK ? SFX_UI_BACK : SFX_UI_CONFIRM);
     if (*selected == SETTINGS_FULLSCREEN) {
         settings_toggle_fullscreen();
     } else if (*selected == SETTINGS_SHOW_FPS) {
@@ -83,7 +107,8 @@ void settings_menu_draw(int selected, int waiting)
     char rows[SETTINGS_COUNT][SETTINGS_LABEL_MAX];
     const char *labels[SETTINGS_COUNT];
 
-    snprintf(rows[SETTINGS_VOLUME], SETTINGS_LABEL_MAX, "Volume :  <  %d%%  >", (int)(settings_volume() * 100.0f + 0.5f));
+    snprintf(rows[SETTINGS_MUSIC_VOLUME], SETTINGS_LABEL_MAX, "Musique :  <  %d%%  >", percent(VOLUME_MUSIC));
+    snprintf(rows[SETTINGS_SFX_VOLUME], SETTINGS_LABEL_MAX, "Effets sonores :  <  %d%%  >", percent(VOLUME_SFX));
     snprintf(rows[SETTINGS_FULLSCREEN], SETTINGS_LABEL_MAX, "Plein ecran : %s", IsWindowFullscreen() ? "Oui" : "Non");
     snprintf(rows[SETTINGS_SHOW_FPS], SETTINGS_LABEL_MAX, "Afficher les FPS : %s", settings_show_fps() ? "Oui" : "Non");
     snprintf(rows[SETTINGS_MOUSE], SETTINGS_LABEL_MAX, "Souris : %s", settings_mouse_enabled() ? "Oui" : "Non");
@@ -99,7 +124,7 @@ void settings_menu_draw(int selected, int waiting)
     bool mouse = settings_mouse_enabled();
     const char *hint = (waiting != NOT_WAITING)
         ? "Appuyez sur une touche (sauf fleches, Entree, Espace)   Echap : annuler"
-        : (selected == SETTINGS_VOLUME)
+        : (volume_kind(selected) >= 0)
             ? (mouse ? "Gauche/Droite ou clic sur < > : regler   Echap / clic droit : retour"
                      : "Gauche/Droite : regler   Echap : retour")
             : (mouse ? "Haut/Bas : choisir   Entree / clic : modifier   Echap / clic droit : retour"

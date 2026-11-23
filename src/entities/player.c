@@ -2,6 +2,7 @@
 #include "entities/player.h"
 #include "render/lighting.h"
 #include "raymath.h"
+#include "core/sfx.h"
 #include <string.h>
 #include <math.h>
 
@@ -11,6 +12,7 @@
 #define BLEND_DURATION    0.2f
 #define WALK_SPEED        2.5f
 #define CLIMB_SPEED       1.5f
+#define CLIMB_SOUND_INTERVAL (1.0f / CLIMB_SPEED)
 #define CRATE_FALL_SPEED  5.0f
 #define PUSH_LEAN         0.2f
 #define LEAN_SPEED        10.0f
@@ -177,6 +179,16 @@ static bool facing_crank(const Player *player, const Level *level, Direction dir
     return cell.type == BLOCK_CRANK && cell.dir == wheel_side;
 }
 
+static bool path_climbs(const MovePath *path)
+{
+    for (int i = 0; i < path->count; i++) {
+        if (path->points[i].climbing) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static void try_start_move(Player *player, Level *level, float camera_yaw)
 {
     int input_x;
@@ -192,6 +204,9 @@ static void try_start_move(Player *player, Level *level, float camera_yaw)
         bool fresh_press = IsKeyPressed(settings_key(ACTION_UP)) || IsKeyPressed(settings_key(ACTION_LEFT))
                            || IsKeyPressed(settings_key(ACTION_DOWN)) || IsKeyPressed(settings_key(ACTION_RIGHT));
         player->crank_requested = fresh_press && facing_crank(player, level, dir);
+        if (fresh_press && !player->crank_requested) {
+            sfx_play(SFX_BUMP);
+        }
         return;
     }
     if (player->path.push) {
@@ -204,8 +219,12 @@ static void try_start_move(Player *player, Level *level, float camera_yaw)
         movement_apply(level, &player->path);
         if (!player->was_pushing) {
             player->push_wait = push_start_duration(player);
+            sfx_play(SFX_PUSH_START);
         }
+    } else if (!path_climbs(&player->path)) {
+        sfx_play(SFX_STEP);
     }
+    player->climb_sound_timer = 0.0f;
     player->moving = true;
     player->path_index = 0;
     player->segment_start = player->position;
@@ -248,6 +267,15 @@ static void finish_crate_slide(Player *player)
     }
 }
 
+static void play_climb_sound(Player *player, float dt)
+{
+    player->climb_sound_timer -= dt;
+    if (player->climb_sound_timer <= 0.0f) {
+        sfx_play(SFX_CLIMB);
+        player->climb_sound_timer = CLIMB_SOUND_INTERVAL;
+    }
+}
+
 static void advance_move(Player *player, float dt)
 {
     PathPoint target = player->path.points[player->path_index];
@@ -263,6 +291,7 @@ static void advance_move(Player *player, float dt)
     PlayerAnim anim = ANIM_WALK;
     if (target.climbing) {
         anim = ANIM_CLIMB;
+        play_climb_sound(player, dt);
     } else if (player->path.push) {
         anim = ANIM_PUSH;
     }
@@ -313,6 +342,7 @@ static void update_crate_fall(Player *player, float dt)
     if (player->crate_position.y <= landing_y) {
         player->crate_position.y = landing_y;
         player->crate_moving = false;
+        sfx_play(SFX_CRATE_LAND);
     }
 }
 
@@ -419,4 +449,9 @@ void player_draw(const Player *player)
 
     float angle = direction_to_model_angle(player->dir);
     DrawModelEx(player->model, position, axis, angle, scale, WHITE);
+}
+
+bool player_pushing(const Player *player)
+{
+    return player->moving && player->path.push && player->push_wait <= 0.0f;
 }

@@ -58,6 +58,8 @@ typedef struct {
     bool quit;
     Music menu_music;
     Music world_music;
+    Music wind;
+    bool was_on_spot;
     TransitionPhase transition;
     float transition_time;
     GameState next_state;

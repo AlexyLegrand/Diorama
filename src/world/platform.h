@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "world/level.h"
 
-#define PLATFORM_MAX_CELLS 32
+#define PLATFORM_MAX_CELLS 64
 
 typedef struct {
     GridPos cells[PLATFORM_MAX_CELLS];

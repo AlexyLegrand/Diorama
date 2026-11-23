@@ -47,6 +47,7 @@ typedef struct {
     float lean;
     bool cranking;
     float crank_progress;
+    float climb_sound_timer;
 } Player;
 
 Player player_load(int x, int y, int z, Direction dir);
@@ -60,6 +61,8 @@ void player_place(Player *player, int x, int y, int z);
 void player_celebrate(Player *player, float camera_yaw);
 
 bool player_is_idle(const Player *player);
+
+bool player_pushing(const Player *player);
 
 void player_set_crank(Player *player, bool active, float progress);
 

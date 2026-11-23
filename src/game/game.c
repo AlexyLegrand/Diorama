@@ -8,6 +8,7 @@
 #include "render/lighting.h"
 #include "render/vegetation.h"
 #include "render/title_logo.h"
+#include "core/sfx.h"
 #include "ui/ui.h"
 #include "ui/settings_menu.h"
 
@@ -17,6 +18,8 @@ static const char *WORLDS_PATH = "levels/worlds.txt";
 static const char *TITLE_SCENE_PATH = "levels/title.txt";
 static const char *MENU_MUSIC_PATH = "assets/music/world/diorama_ambiance.wav";
 static const char *WORLD_MUSIC_PATH = "assets/music/world/diorama_ambiance_version_longue.wav";
+static const char *WIND_PATH = "assets/music/world/ambience_wind.mp3";
+static const float WIND_VOLUME = 0.4f;
 static const float FADE_OUT_DURATION = 1.0f;
 static const float FADE_HOLD_DURATION = 0.4f;
 static const float FADE_IN_DURATION = 1.2f;
@@ -37,6 +40,7 @@ static bool start_level(const char *path, Level *level, Player *player, OrbitCam
     *level = loaded;
     player_place(player, level->start_x, level->start_y, level->start_z);
     orbit->target = level_center(level);
+    orbit_camera_fit(orbit, (Vector3){ (float)level->width, (float)level->height, (float)level->depth });
     block_render_reward_reset();
     crank->active = false;
     return true;
@@ -112,14 +116,25 @@ static void update_world(Game *g)
     player_update(&g->player, &g->level, camera_yaw, !g->crank.active);
     if (g->player.crank_requested) {
         GridPos player_cell = { g->player.x, g->player.y, g->player.z };
-        crank_start(&g->crank, &g->level, player_cell);
+        if (crank_start(&g->crank, &g->level, player_cell)) {
+            sfx_play(SFX_CRANK);
+            sfx_play(SFX_CRANK_TURN);
+        } else {
+            sfx_play(SFX_BUMP);
+        }
     }
+    bool was_cranking = g->crank.active;
     crank_update(&g->crank);
+    if (was_cranking && !g->crank.active) {
+        sfx_play(SFX_PLATFORM_STOP);
+    }
     player_set_crank(&g->player, g->crank.active, g->crank.progress);
     if (g->state == STATE_PLAYING && player_on_reward(&g->player, &g->level)) {
         g->state = STATE_WON;
         player_celebrate(&g->player, camera_yaw);
         block_render_reward_collect();
+        sfx_play(SFX_VICTORY);
+        sfx_play(SFX_SEED_COLLECT);
     }
     if (g->state == STATE_WON && block_render_reward_collected()) {
         g->level.cells[g->player.y][g->player.x][g->player.z].type = BLOCK_EMPTY;
@@ -129,6 +144,7 @@ static void update_world(Game *g)
 static void unload_assets(void)
 {
     title_logo_unload();
+    sfx_unload();
     backdrop_assets_unload();
     vegetation_unload();
     block_render_unload();
@@ -190,6 +206,7 @@ bool game_init(Game *g)
     lighting_load();
     block_render_load();
     title_logo_load();
+    sfx_load();
     vegetation_load();
     backdrop_assets_load();
     progress_load(&g->progress);
@@ -219,6 +236,7 @@ bool game_init(Game *g)
     g->settings_waiting = NOT_WAITING;
     g->menu_music = LoadMusicStream(MENU_MUSIC_PATH);
     g->world_music = LoadMusicStream(WORLD_MUSIC_PATH);
+    g->wind = LoadMusicStream(WIND_PATH);
     return true;
 }
 
@@ -244,6 +262,7 @@ static void begin_transition(Game *g, GameState next_state, int next_level)
     g->next_state = next_state;
     g->next_level = next_level;
     g->next_world = g->world;
+    sfx_play(SFX_UI_TRANSITION);
 }
 
 static void begin_world_transition(Game *g, int next_world)
@@ -337,6 +356,7 @@ static void update_title(Game *g, bool back, bool confirm)
         begin_transition(g, STATE_MAP, -1);
     } else if (confirm && g->title_selected == TITLE_SETTINGS) {
         g->state = STATE_SETTINGS;
+        sfx_play(SFX_UI_CONFIRM);
     } else if (back || (confirm && g->title_selected == TITLE_QUIT)) {
         g->quit = true;
     }
@@ -347,6 +367,11 @@ static void update_map(Game *g, bool back, bool confirm)
     update_world(g);
     g->entrance = entrance_under(&g->player, &g->level);
     g->portal = portal_under(&g->player, &g->level);
+    bool on_spot = g->entrance >= 0 || g->portal != 0;
+    if (on_spot && !g->was_on_spot) {
+        sfx_play(SFX_UI_ENTRANCE);
+    }
+    g->was_on_spot = on_spot;
     bool next_open = g->world + 1 < g->world_count && game_world_done(g);
     if (back) {
         begin_transition(g, STATE_TITLE, -1);
@@ -358,6 +383,8 @@ static void update_map(Game *g, bool back, bool confirm)
         begin_world_transition(g, g->world + 1);
     } else if (g->portal < 0 && g->world > 0) {
         begin_world_transition(g, g->world - 1);
+    } else if (g->entrance >= 0 || g->portal > 0) {
+        sfx_play(SFX_UI_LOCKED);
     }
 }
 
@@ -367,12 +394,16 @@ static void update_level(Game *g, bool back, bool confirm)
     if (g->state == STATE_WON && !g->progress.completed[g->world][g->level_index]) {
         g->progress.completed[g->world][g->level_index] = true;
         progress_save(&g->progress);
+        if (game_world_done(g) && g->world + 1 < g->world_count) {
+            sfx_play(SFX_UI_UNLOCK);
+        }
     }
     bool leave = back || (g->state == STATE_WON && confirm);
     if (leave) {
         begin_transition(g, STATE_MAP, -1);
     } else if (IsKeyPressed(settings_key(ACTION_RESTART)) && start_world_level(g, g->level_index)) {
         g->state = STATE_PLAYING;
+        sfx_play(SFX_UI_RESTART);
     }
 }
 
@@ -392,11 +423,16 @@ static void play_music_while(Music music, bool active, float volume)
 
 static void update_music(Game *g)
 {
-    float volume = 1.0f - game_fade(g);
+    float fade = 1.0f - game_fade(g);
+    float volume = fade * settings_volume(VOLUME_MUSIC);
+    float ambience = fade * settings_volume(VOLUME_SFX) * WIND_VOLUME;
     bool in_menu = g->state == STATE_TITLE || g->state == STATE_SETTINGS;
 
     play_music_while(g->menu_music, in_menu, volume);
     play_music_while(g->world_music, !in_menu, volume);
+    play_music_while(g->wind, !in_menu, ambience);
+    sfx_loop(SFX_LOOP_CRATE, !in_menu && player_pushing(&g->player));
+    sfx_loop(SFX_LOOP_PLATFORM, !in_menu && g->crank.active);
 }
 
 void game_update(Game *g)
@@ -440,5 +476,6 @@ void game_unload(Game *g)
     player_unload(&g->title_player);
     unload_music(&g->menu_music);
     unload_music(&g->world_music);
+    unload_music(&g->wind);
     unload_assets();
 }

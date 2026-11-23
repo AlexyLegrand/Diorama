@@ -5,7 +5,8 @@
 
 const char *glfwGetKeyName(int key, int scancode);
 
-#define SETTINGS_VERSION 3
+#define SETTINGS_VERSION 4
+#define SETTINGS_VERSION_ONE_VOLUME 3
 #define SETTINGS_VERSION_NO_MOUSE 2
 
 static const char *SETTINGS_PATH = "settings.dat";
@@ -28,12 +29,21 @@ static const int KEY_CODE_MAX = 512;
 
 typedef struct {
     int version;
-    float volume;
+    float volumes[VOLUME_COUNT];
     bool fullscreen;
     bool show_fps;
     int keys[ACTION_COUNT];
     bool mouse;
 } Settings;
+
+typedef struct {
+    int version;
+    float volume;
+    bool fullscreen;
+    bool show_fps;
+    int keys[ACTION_COUNT];
+    bool mouse;
+} SettingsOneVolume;
 
 /* Layout of settings.dat before the mouse option (version 2), kept to migrate it. */
 typedef struct {
@@ -49,7 +59,9 @@ static Settings _settings;
 static void reset_defaults(void)
 {
     _settings.version = SETTINGS_VERSION;
-    _settings.volume = DEFAULT_VOLUME;
+    for (int i = 0; i < VOLUME_COUNT; i++) {
+        _settings.volumes[i] = DEFAULT_VOLUME;
+    }
     _settings.fullscreen = false;
     _settings.show_fps = false;
     memcpy(_settings.keys, DEFAULT_KEYS, sizeof(_settings.keys));
@@ -58,8 +70,13 @@ static void reset_defaults(void)
 
 static bool is_valid(const Settings *s)
 {
-    if (s->version != SETTINGS_VERSION || s->volume < 0.0f || s->volume > 1.0f) {
+    if (s->version != SETTINGS_VERSION) {
         return false;
+    }
+    for (int i = 0; i < VOLUME_COUNT; i++) {
+        if (s->volumes[i] < 0.0f || s->volumes[i] > 1.0f) {
+            return false;
+        }
     }
     for (int i = 0; i < ACTION_COUNT; i++) {
         if (s->keys[i] <= KEY_NULL || s->keys[i] >= KEY_CODE_MAX) {
@@ -75,14 +92,22 @@ void settings_load(void)
     unsigned char *data = FileExists(SETTINGS_PATH) ? LoadFileData(SETTINGS_PATH, &size) : NULL;
 
     reset_defaults();
-    if (data != NULL && size == (int)sizeof(SettingsNoMouse)
-        && ((const SettingsNoMouse *)data)->version == SETTINGS_VERSION_NO_MOUSE) {
+    bool no_mouse = data != NULL && size == (int)sizeof(SettingsNoMouse)
+        && ((const SettingsNoMouse *)data)->version == SETTINGS_VERSION_NO_MOUSE;
+    bool one_volume = data != NULL && size == (int)sizeof(SettingsOneVolume)
+        && ((const SettingsOneVolume *)data)->version == SETTINGS_VERSION_ONE_VOLUME;
+    if (no_mouse || one_volume) {
         const SettingsNoMouse *old = (const SettingsNoMouse *)data;
         Settings migrated = _settings;
-        migrated.volume = old->volume;
+        for (int i = 0; i < VOLUME_COUNT; i++) {
+            migrated.volumes[i] = old->volume;
+        }
         migrated.fullscreen = old->fullscreen;
         migrated.show_fps = old->show_fps;
         memcpy(migrated.keys, old->keys, sizeof(migrated.keys));
+        if (one_volume) {
+            migrated.mouse = ((const SettingsOneVolume *)data)->mouse;
+        }
         if (is_valid(&migrated)) {
             _settings = migrated;
         }
@@ -92,7 +117,6 @@ void settings_load(void)
         TraceLog(LOG_WARNING, "SETTINGS: %s is invalid, using defaults", SETTINGS_PATH);
     }
     UnloadFileData(data);
-    SetMasterVolume(_settings.volume);
     if (_settings.fullscreen != IsWindowFullscreen()) {
         ToggleFullscreen();
     }
@@ -125,16 +149,15 @@ void settings_reset_keys(void)
     memcpy(_settings.keys, DEFAULT_KEYS, sizeof(_settings.keys));
 }
 
-float settings_volume(void)
+float settings_volume(VolumeKind kind)
 {
-    return _settings.volume;
+    return _settings.volumes[kind];
 }
 
-void settings_change_volume(float delta)
+void settings_change_volume(VolumeKind kind, float delta)
 {
-    float volume = _settings.volume + delta;
-    _settings.volume = volume < 0.0f ? 0.0f : (volume > 1.0f ? 1.0f : volume);
-    SetMasterVolume(_settings.volume);
+    float volume = _settings.volumes[kind] + delta;
+    _settings.volumes[kind] = volume < 0.0f ? 0.0f : (volume > 1.0f ? 1.0f : volume);
 }
 
 void settings_toggle_fullscreen(void)
