@@ -15,13 +15,17 @@ se frayer un chemin jusqu'à la graine.
 
 ## Boucle de jeu
 
-1. **Écran titre** : Jouer, Paramètres, Quitter, avec une scène qui tourne lentement en fond.
+1. **Écran titre** : Jouer (ou Continuer et Nouvelle partie quand une sauvegarde existe), Paramètres,
+   Quitter, avec le logo 3D posé au-dessus de l'île. Nouvelle partie demande confirmation avant d'effacer.
 2. **Carte du monde** : un diorama « hub » où Sprout marche librement entre les entrées de niveaux
    (dalles numérotées). Se placer sur une dalle et valider lance le niveau.
 3. **Niveau** : résoudre le puzzle pour atteindre la graine dorée.
 4. **Victoire** : Sprout fait son animation de victoire, la graine est collectée, le niveau est
    marqué comme terminé (dalle dorée sur la carte) et le niveau suivant est débloqué.
-5. Retour à la carte.
+5. Menu de victoire : **Niveau suivant** (s'il en reste dans le monde) ou **Retour à la carte**.
+
+À tout moment sur la carte ou dans un niveau, **Échap** ouvre le **menu pause** : Reprendre,
+Recommencer (dans un niveau), Paramètres, puis Retour à la carte (niveau) ou Menu principal (carte).
 6. Quand tous les niveaux d'un monde sont terminés, le **portail** de la carte s'ouvre et mène au monde suivant.
 
 Les niveaux se débloquent dans l'ordre : le niveau *N* s'ouvre quand le niveau *N − 1* est terminé.

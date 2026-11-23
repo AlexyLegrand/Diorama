@@ -3,6 +3,7 @@
 #include <string.h>
 #include "raylib.h"
 #include "game/game.h"
+#include "game/game_internal.h"
 #include "core/settings.h"
 #include "render/block_render.h"
 #include "render/lighting.h"
@@ -20,6 +21,7 @@ static const char *MENU_MUSIC_PATH = "assets/music/world/diorama_ambiance.wav";
 static const char *WORLD_MUSIC_PATH = "assets/music/world/diorama_ambiance_version_longue.wav";
 static const char *WIND_PATH = "assets/music/world/ambience_wind.mp3";
 static const float WIND_VOLUME = 0.4f;
+static const double ENTRANCE_SOUND_COOLDOWN = 0.5;
 static const float FADE_OUT_DURATION = 1.0f;
 static const float FADE_HOLD_DURATION = 0.4f;
 static const float FADE_IN_DURATION = 1.2f;
@@ -111,7 +113,9 @@ static bool load_backdrop(Backdrop *backdrop, const char *level_path)
 
 static void update_world(Game *g)
 {
-    orbit_camera_update(&g->orbit);
+    if (g->state != STATE_WON) {
+        orbit_camera_update(&g->orbit);
+    }
     float camera_yaw = orbit_camera_snapped_yaw(&g->orbit);
     player_update(&g->player, &g->level, camera_yaw, !g->crank.active);
     if (g->player.crank_requested) {
@@ -172,7 +176,7 @@ static void load_world_scenery(Game *g)
     }
 }
 
-static bool load_world(Game *g, int index)
+bool load_world(Game *g, int index)
 {
     int previous = g->world;
 
@@ -232,11 +236,12 @@ bool game_init(Game *g)
     g->title_orbit.target.y += TITLE_TARGET_RAISE;
     sway_title_camera(g);
     g->state = STATE_TITLE;
-    g->title_selected = TITLE_PLAY;
+    g->menu_selected = 0;
     g->settings_waiting = NOT_WAITING;
     g->menu_music = LoadMusicStream(MENU_MUSIC_PATH);
     g->world_music = LoadMusicStream(WORLD_MUSIC_PATH);
     g->wind = LoadMusicStream(WIND_PATH);
+    g->entrance_sound_time = -ENTRANCE_SOUND_COOLDOWN;
     return true;
 }
 
@@ -255,7 +260,7 @@ bool game_world_done(const Game *g)
     return true;
 }
 
-static void begin_transition(Game *g, GameState next_state, int next_level)
+void begin_transition(Game *g, GameState next_state, int next_level)
 {
     g->transition = TRANSITION_OUT;
     g->transition_time = 0.0f;
@@ -347,34 +352,21 @@ float game_fade(const Game *g)
     }
 }
 
-static void update_title(Game *g, bool back, bool confirm)
-{
-    g->title_selected = ui_navigate(g->title_selected, TITLE_COUNT);
-    sway_title_camera(g);
-    confirm = confirm || (g->transition == TRANSITION_NONE && ui_menu_clicked(TITLE_COUNT));
-    if (confirm && g->title_selected == TITLE_PLAY) {
-        begin_transition(g, STATE_MAP, -1);
-    } else if (confirm && g->title_selected == TITLE_SETTINGS) {
-        g->state = STATE_SETTINGS;
-        sfx_play(SFX_UI_CONFIRM);
-    } else if (back || (confirm && g->title_selected == TITLE_QUIT)) {
-        g->quit = true;
-    }
-}
-
 static void update_map(Game *g, bool back, bool confirm)
 {
     update_world(g);
     g->entrance = entrance_under(&g->player, &g->level);
     g->portal = portal_under(&g->player, &g->level);
     bool on_spot = g->entrance >= 0 || g->portal != 0;
-    if (on_spot && !g->was_on_spot) {
+    bool cooled_down = GetTime() - g->entrance_sound_time >= ENTRANCE_SOUND_COOLDOWN;
+    if (on_spot && !g->was_on_spot && cooled_down) {
         sfx_play(SFX_UI_ENTRANCE);
+        g->entrance_sound_time = GetTime();
     }
     g->was_on_spot = on_spot;
     bool next_open = g->world + 1 < g->world_count && game_world_done(g);
     if (back) {
-        begin_transition(g, STATE_TITLE, -1);
+        game_menu_open_pause(g);
     } else if (!confirm) {
         return;
     } else if (g->entrance >= 0 && ui_level_unlocked(game_completed(g), g->entrance)) {
@@ -398,13 +390,36 @@ static void update_level(Game *g, bool back, bool confirm)
             sfx_play(SFX_UI_UNLOCK);
         }
     }
-    bool leave = back || (g->state == STATE_WON && confirm);
-    if (leave) {
-        begin_transition(g, STATE_MAP, -1);
-    } else if (IsKeyPressed(settings_key(ACTION_RESTART)) && start_world_level(g, g->level_index)) {
+    if (g->state == STATE_WON) {
+        game_menu_update(g, back, confirm);
+    } else if (back) {
+        game_menu_open_pause(g);
+    } else if (IsKeyPressed(settings_key(ACTION_RESTART))) {
+        restart_level(g);
+    }
+}
+
+void restart_level(Game *g)
+{
+    if (start_world_level(g, g->level_index)) {
         g->state = STATE_PLAYING;
         sfx_play(SFX_UI_RESTART);
     }
+}
+
+bool game_in_title_scene(const Game *g)
+{
+    bool title_settings = g->state == STATE_SETTINGS && g->settings_return == STATE_TITLE;
+
+    return g->state == STATE_TITLE || g->state == STATE_CONFIRM_NEW || title_settings;
+}
+
+GameState game_scene_state(const Game *g)
+{
+    if (g->state == STATE_PAUSED || (g->state == STATE_SETTINGS && g->settings_return == STATE_PAUSED)) {
+        return g->paused_from;
+    }
+    return g->state;
 }
 
 static void play_music_while(Music music, bool active, float volume)
@@ -426,13 +441,14 @@ static void update_music(Game *g)
     float fade = 1.0f - game_fade(g);
     float volume = fade * settings_volume(VOLUME_MUSIC);
     float ambience = fade * settings_volume(VOLUME_SFX) * WIND_VOLUME;
-    bool in_menu = g->state == STATE_TITLE || g->state == STATE_SETTINGS;
+    bool in_menu = game_in_title_scene(g);
+    bool in_world = !in_menu && g->state == game_scene_state(g);
 
     play_music_while(g->menu_music, in_menu, volume);
     play_music_while(g->world_music, !in_menu, volume);
     play_music_while(g->wind, !in_menu, ambience);
-    sfx_loop(SFX_LOOP_CRATE, !in_menu && player_pushing(&g->player));
-    sfx_loop(SFX_LOOP_PLATFORM, !in_menu && g->crank.active);
+    sfx_loop(SFX_LOOP_CRATE, in_world && player_pushing(&g->player));
+    sfx_loop(SFX_LOOP_PLATFORM, in_world && g->crank.active);
 }
 
 void game_update(Game *g)
@@ -447,14 +463,18 @@ void game_update(Game *g)
         back = false;
         confirm = false;
     }
+    if (game_in_title_scene(g)) {
+        sway_title_camera(g);
+    }
     switch (g->state) {
     case STATE_TITLE:
-        update_title(g, back, confirm);
+    case STATE_CONFIRM_NEW:
+    case STATE_PAUSED:
+        game_menu_update(g, back, confirm);
         break;
     case STATE_SETTINGS:
-        sway_title_camera(g);
         if (settings_menu_update(&g->settings_selected, &g->settings_waiting)) {
-            g->state = STATE_TITLE;
+            g->state = g->settings_return;
         }
         break;
     case STATE_MAP:

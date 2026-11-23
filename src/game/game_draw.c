@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include "raylib.h"
 #include "game/game.h"
+#include "game/game_internal.h"
 #include "core/settings.h"
 #include "render/block_render.h"
 #include "render/lighting.h"
@@ -12,6 +13,7 @@
 
 static const int FPS_MARGIN = 20;
 static const int FPS_WIDTH = 100;
+static const float PAUSE_SHADE = 0.45f;
 static const char *LOADING_TEXT = "Chargement...";
 static const int LOADING_FONT_SIZE = 30;
 static const int LOADING_MARGIN = 40;
@@ -38,8 +40,9 @@ static void draw_world(const Level *level, const Player *player, const CrankAnim
 
 static void draw_scene(Game *g, bool in_menu, Camera3D camera)
 {
+    GameState scene = game_scene_state(g);
     const Backdrop *sky = in_menu ? &g->title_sky
-                        : (g->state == STATE_MAP ? &g->map_sky : &g->level_skies[g->level_index]);
+                        : (scene == STATE_MAP ? &g->map_sky : &g->level_skies[g->level_index]);
     Vector3 scene_center = in_menu ? level_center(&g->title_scene) : level_center(&g->level);
 
     backdrop_draw_dome(scene_center);
@@ -53,7 +56,7 @@ static void draw_scene(Game *g, bool in_menu, Camera3D camera)
     } else {
         draw_world(&g->level, &g->player, &g->crank);
     }
-    if (g->state == STATE_MAP) {
+    if (!in_menu && scene == STATE_MAP) {
         ui_draw_entrances(&g->level, game_completed(g));
         bool next_open = g->world + 1 < g->world_count && game_world_done(g);
         if (g->level.has_portal_next) {
@@ -84,18 +87,22 @@ static const char *portal_prompt(const Game *g)
 
 static void draw_overlay(const Game *g, Camera3D camera)
 {
-    if (g->state == STATE_TITLE) {
-        const char *labels[TITLE_COUNT] = { "Jouer", "Parametres", "Quitter" };
-        ui_draw_menu(NULL, labels, TITLE_COUNT, g->title_selected,
-                     settings_mouse_enabled() ? "Haut/Bas : choisir   Entree / clic : valider   Echap : quitter"
-                                              : "Haut/Bas : choisir   Entree : valider   Echap : quitter");
-    } else if (g->state == STATE_SETTINGS) {
-        settings_menu_draw(g->settings_selected, g->settings_waiting);
-    } else if (g->state == STATE_MAP) {
+    GameState scene = game_scene_state(g);
+    bool in_title = game_in_title_scene(g);
+
+    if (!in_title && scene == STATE_MAP) {
         ui_draw_map_hud(camera, &g->level, game_completed(g), g->entrance,
                         g->worlds[g->world].name, portal_prompt(g));
-    } else {
-        hud_draw(g->state == STATE_WON, g->worlds[g->world].name, g->level_index);
+    } else if (!in_title) {
+        hud_draw(g->worlds[g->world].name, g->level_index);
+    }
+    if (!in_title && scene != g->state) {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, PAUSE_SHADE));
+    }
+    if (g->state == STATE_SETTINGS) {
+        settings_menu_draw(g->settings_selected, g->settings_waiting);
+    } else if (game_menu_active(g)) {
+        game_menu_draw(g);
     }
     if (settings_show_fps()) {
         DrawFPS(GetScreenWidth() - FPS_WIDTH, FPS_MARGIN);
@@ -119,7 +126,7 @@ static void draw_transition(const Game *g)
 
 void game_draw(Game *g)
 {
-    bool in_menu = g->state == STATE_TITLE || g->state == STATE_SETTINGS;
+    bool in_menu = game_in_title_scene(g);
     Camera3D camera = orbit_camera_to_raylib(in_menu ? &g->title_orbit : &g->orbit);
 
     lighting_update(camera.position);

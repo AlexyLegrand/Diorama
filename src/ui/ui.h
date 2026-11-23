@@ -24,6 +24,6 @@ void ui_draw_portal(GridPos cell, bool open);
 void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], int entrance_here,
                      const char *world_name, const char *portal_prompt);
 
-void hud_draw(bool won, const char *world_name, int level_index);
+void hud_draw(const char *world_name, int level_index);
 
 #endif

@@ -20,13 +20,18 @@ static bool is_valid(const Progress *p)
     return true;
 }
 
+void progress_reset(Progress *progress)
+{
+    memset(progress, 0, sizeof(*progress));
+    progress->version = PROGRESS_VERSION;
+}
+
 void progress_load(Progress *progress)
 {
     int size = 0;
     unsigned char *data = FileExists(PROGRESS_PATH) ? LoadFileData(PROGRESS_PATH, &size) : NULL;
 
-    memset(progress, 0, sizeof(*progress));
-    progress->version = PROGRESS_VERSION;
+    progress_reset(progress);
     if (data != NULL && size == (int)sizeof(Progress) && is_valid((const Progress *)data)) {
         memcpy(progress, data, sizeof(Progress));
     } else if (data != NULL) {
@@ -40,4 +45,16 @@ void progress_save(const Progress *progress)
     if (!SaveFileData(PROGRESS_PATH, (void *)progress, sizeof(Progress))) {
         TraceLog(LOG_WARNING, "PROGRESS: could not save %s", PROGRESS_PATH);
     }
+}
+
+bool progress_is_new(const Progress *progress)
+{
+    for (int w = 0; w < WORLD_MAX; w++) {
+        for (int i = 0; i < LEVEL_MAX_ENTRANCES; i++) {
+            if (progress->completed[w][i]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }

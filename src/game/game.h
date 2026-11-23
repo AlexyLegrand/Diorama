@@ -15,15 +15,10 @@ typedef enum {
     STATE_SETTINGS,
     STATE_MAP,
     STATE_PLAYING,
-    STATE_WON
+    STATE_WON,
+    STATE_PAUSED,
+    STATE_CONFIRM_NEW
 } GameState;
-
-typedef enum {
-    TITLE_PLAY,
-    TITLE_SETTINGS,
-    TITLE_QUIT,
-    TITLE_COUNT
-} TitleItem;
 
 typedef enum {
     TRANSITION_NONE,
@@ -52,7 +47,9 @@ typedef struct {
     int level_index;
     int entrance;
     int portal;
-    int title_selected;
+    int menu_selected;
+    GameState paused_from;
+    GameState settings_return;
     int settings_selected;
     int settings_waiting;
     bool quit;
@@ -60,6 +57,7 @@ typedef struct {
     Music world_music;
     Music wind;
     bool was_on_spot;
+    double entrance_sound_time;
     TransitionPhase transition;
     float transition_time;
     GameState next_state;
@@ -80,5 +78,9 @@ float game_fade(const Game *g);
 const bool *game_completed(const Game *g);
 
 bool game_world_done(const Game *g);
+
+bool game_in_title_scene(const Game *g);
+
+GameState game_scene_state(const Game *g);
 
 #endif

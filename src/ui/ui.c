@@ -27,10 +27,6 @@ static const int HINT_SIZE = 20;
 static const int HUD_MARGIN = 20;
 static const int HUD_PADDING = 12;
 static const int HUD_TITLE_SIZE = 30;
-static const int WIN_PANEL_Y = 100;
-static const int WIN_PANEL_HEIGHT = 150;
-static const int WIN_TITLE_SIZE = 60;
-static const int WIN_HINT_SIZE = 25;
 
 static const float PAD_RADIUS = 0.42f;
 static const float PAD_HEIGHT = 0.06f;
@@ -250,7 +246,7 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
         snprintf(names[i], KEY_NAME_MAX, "%s", settings_key_name(settings_key(walk_actions[i])));
     }
     char walk[HINT_MAX];
-    snprintf(walk, HINT_MAX, "%s%s%s%s : marcher   Fleches : camera   Echap : menu",
+    snprintf(walk, HINT_MAX, "%s%s%s%s : marcher   Fleches : camera   Echap : pause",
              names[0], names[1], names[2], names[3]);
     draw_text_shadowed(walk,
                        HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
@@ -263,17 +259,10 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
     }
 }
 
-void hud_draw(bool won, const char *world_name, int level_index)
+void hud_draw(const char *world_name, int level_index)
 {
-    const char *hint = TextFormat("%s : recommencer   Echap : carte", settings_key_name(settings_key(ACTION_RESTART)));
+    const char *hint = TextFormat("%s : recommencer   Echap : pause", settings_key_name(settings_key(ACTION_RESTART)));
 
     draw_title_panel(TextFormat("%s  -  Niveau %d", world_name, level_index + 1));
     draw_text_shadowed(hint, HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
-    if (!won) {
-        return;
-    }
-    draw_panel(GetScreenWidth() / 2 - PANEL_WIDTH / 2, WIN_PANEL_Y, PANEL_WIDTH, WIN_PANEL_HEIGHT);
-    draw_centered("Bravo !", WIN_PANEL_Y + PANEL_PADDING, WIN_TITLE_SIZE, GOLD);
-    draw_centered("Entree : retour a la carte", WIN_PANEL_Y + WIN_PANEL_HEIGHT - PANEL_PADDING - WIN_HINT_SIZE,
-                  WIN_HINT_SIZE, WHITE);
 }

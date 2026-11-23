@@ -16,4 +16,8 @@ void progress_load(Progress *progress);
 
 void progress_save(const Progress *progress);
 
+bool progress_is_new(const Progress *progress);
+
+void progress_reset(Progress *progress);
+
 #endif

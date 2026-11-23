@@ -45,7 +45,7 @@ Run the game from the project root (it loads `levels/` and `assets/` with relati
 | Zoom | | Wheel |
 | Navigate menus | Arrow keys | Hover |
 | Confirm / enter a level | Enter or Space | Left click (menus) |
-| Back | Escape | Right click (settings) |
+| Pause / back | Escape | Right click (settings) |
 
 Settings (saved to `settings.dat`; game progress goes to `progress.dat`): music volume, sound effects volume, fullscreen, FPS counter, mouse on/off in menus,
 and rebindable movement and restart keys.
