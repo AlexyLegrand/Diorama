@@ -201,13 +201,13 @@ const char *settings_key_name(int key)
     }
     switch (key) {
     case KEY_SPACE: return "Espace";
-    case KEY_ENTER: return "Entree";
+    case KEY_ENTER: return "Entrée";
     case KEY_TAB: return "Tab";
     case KEY_BACKSPACE: return "Retour arr.";
     case KEY_UP: return "Haut";
     case KEY_DOWN: return "Bas";
-    case KEY_LEFT: return "Fleche G";
-    case KEY_RIGHT: return "Fleche D";
+    case KEY_LEFT: return "Flèche G";
+    case KEY_RIGHT: return "Flèche D";
     case KEY_LEFT_SHIFT: return "Maj G";
     case KEY_RIGHT_SHIFT: return "Maj D";
     case KEY_LEFT_CONTROL: return "Ctrl G";

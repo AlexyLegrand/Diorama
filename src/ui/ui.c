@@ -48,15 +48,81 @@ static const Color PAD_LOCKED = { 90, 90, 100, 255 };
 static const Color LABEL_LOCKED = { 150, 150, 160, 255 };
 static const Color PORTAL_OPEN = { 170, 110, 255, 255 };
 
+static const char *FONT_PATH = "assets/fonts/LilitaOne-Regular.ttf";
+static const int FONT_BASE_SIZE = 96;
+static const float FONT_SPACING_RATIO = 0.04f;
+static const int FONT_EXTRA_CODEPOINTS[] = { 0x152, 0x153, 0x2019, 0x2026 };
+#define FONT_ASCII_FIRST 32
+#define FONT_ASCII_LAST 126
+#define FONT_LATIN1_FIRST 160
+#define FONT_LATIN1_LAST 255
+
+static Font font;
+static bool font_loaded;
+
+void ui_load_font(void)
+{
+    int codepoints[(FONT_ASCII_LAST - FONT_ASCII_FIRST + 1) + (FONT_LATIN1_LAST - FONT_LATIN1_FIRST + 1)
+                   + sizeof(FONT_EXTRA_CODEPOINTS) / sizeof(FONT_EXTRA_CODEPOINTS[0])];
+    int count = 0;
+
+    for (int c = FONT_ASCII_FIRST; c <= FONT_ASCII_LAST; c++) {
+        codepoints[count++] = c;
+    }
+    for (int c = FONT_LATIN1_FIRST; c <= FONT_LATIN1_LAST; c++) {
+        codepoints[count++] = c;
+    }
+    for (size_t i = 0; i < sizeof(FONT_EXTRA_CODEPOINTS) / sizeof(FONT_EXTRA_CODEPOINTS[0]); i++) {
+        codepoints[count++] = FONT_EXTRA_CODEPOINTS[i];
+    }
+    if (!FileExists(FONT_PATH)) {
+        TraceLog(LOG_WARNING, "UI: %s not found, using the default font", FONT_PATH);
+        return;
+    }
+    font = LoadFontEx(FONT_PATH, FONT_BASE_SIZE, codepoints, count);
+    font_loaded = IsFontValid(font);
+    if (font_loaded) {
+        SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
+    }
+}
+
+void ui_unload_font(void)
+{
+    if (font_loaded) {
+        UnloadFont(font);
+        font_loaded = false;
+    }
+}
+
+static Font current_font(void)
+{
+    return font_loaded ? font : GetFontDefault();
+}
+
+static float spacing_for(int size)
+{
+    return font_loaded ? size * FONT_SPACING_RATIO : size / 10.0f;
+}
+
+void ui_text(const char *text, int x, int y, int size, Color color)
+{
+    DrawTextEx(current_font(), text, (Vector2){ (float)x, (float)y }, (float)size, spacing_for(size), color);
+}
+
+int ui_measure(const char *text, int size)
+{
+    return (int)MeasureTextEx(current_font(), text, (float)size, spacing_for(size)).x;
+}
+
 static void draw_text_shadowed(const char *text, int x, int y, int size, Color color)
 {
-    DrawText(text, x + SHADOW_OFFSET, y + SHADOW_OFFSET, size, SHADOW_COLOR);
-    DrawText(text, x, y, size, color);
+    ui_text(text, x + SHADOW_OFFSET, y + SHADOW_OFFSET, size, SHADOW_COLOR);
+    ui_text(text, x, y, size, color);
 }
 
 static void draw_centered_at(const char *text, int center_x, int y, int size, Color color)
 {
-    draw_text_shadowed(text, center_x - MeasureText(text, size) / 2, y, size, color);
+    draw_text_shadowed(text, center_x - ui_measure(text, size) / 2, y, size, color);
 }
 
 static void draw_centered(const char *text, int y, int size, Color color)
@@ -170,7 +236,7 @@ void ui_draw_menu(const char *title, const char *const labels[], int count, int 
         Rectangle bar = { panel_x + HUD_PADDING - pulse, item_y - HUD_PADDING / 2,
                           panel_w - 2 * HUD_PADDING + 2 * pulse, item_size + HUD_PADDING };
         DrawRectangleRounded(bar, PANEL_ROUNDNESS * 2, PANEL_SEGMENTS, FOCUS_COLOR);
-        DrawText(labels[i], screen_w / 2 - MeasureText(labels[i], item_size) / 2, item_y, item_size, FOCUS_TEXT);
+        ui_text(labels[i], screen_w / 2 - ui_measure(labels[i], item_size) / 2, item_y, item_size, FOCUS_TEXT);
     }
     draw_centered(hint, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
 }
@@ -211,7 +277,7 @@ void ui_draw_portal(GridPos cell, bool open)
 
 static void draw_prompt(const char *prompt)
 {
-    int prompt_w = MeasureText(prompt, PROMPT_SIZE) + 2 * PANEL_PADDING;
+    int prompt_w = ui_measure(prompt, PROMPT_SIZE) + 2 * PANEL_PADDING;
     int prompt_y = GetScreenHeight() - PROMPT_BOTTOM - PROMPT_SIZE;
     draw_panel(GetScreenWidth() / 2 - prompt_w / 2, prompt_y - HUD_PADDING, prompt_w, PROMPT_SIZE + 2 * HUD_PADDING);
     draw_centered(prompt, prompt_y, PROMPT_SIZE, WHITE);
@@ -219,10 +285,10 @@ static void draw_prompt(const char *prompt)
 
 static void draw_title_panel(const char *title)
 {
-    int title_w = MeasureText(title, HUD_TITLE_SIZE);
+    int title_w = ui_measure(title, HUD_TITLE_SIZE);
 
     draw_panel(HUD_MARGIN, HUD_MARGIN, title_w + 2 * HUD_PADDING, HUD_TITLE_SIZE + 2 * HUD_PADDING);
-    DrawText(title, HUD_MARGIN + HUD_PADDING, HUD_MARGIN + HUD_PADDING, HUD_TITLE_SIZE, WHITE);
+    ui_text(title, HUD_MARGIN + HUD_PADDING, HUD_MARGIN + HUD_PADDING, HUD_TITLE_SIZE, WHITE);
 }
 
 void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], int entrance_here,
@@ -236,7 +302,7 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
         bool unlocked = ui_level_unlocked(completed, i);
         const char *label = completed[i] ? TextFormat("%d *", i + 1)
                           : unlocked     ? TextFormat("%d", i + 1)
-                                         : TextFormat("%d (ferme)", i + 1);
+                                         : TextFormat("%d (fermé)", i + 1);
         Color color = completed[i] ? GOLD : (unlocked ? WHITE : LABEL_LOCKED);
         draw_centered_at(label, (int)screen.x, (int)screen.y, LABEL_SIZE, color);
     }
@@ -246,14 +312,14 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
         snprintf(names[i], KEY_NAME_MAX, "%s", settings_key_name(settings_key(walk_actions[i])));
     }
     char walk[HINT_MAX];
-    snprintf(walk, HINT_MAX, "%s%s%s%s : marcher   Fleches : camera   Echap : pause",
+    snprintf(walk, HINT_MAX, "%s%s%s%s : marcher   Flèches : caméra   Échap : pause",
              names[0], names[1], names[2], names[3]);
     draw_text_shadowed(walk,
                        HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
     if (entrance_here >= 0) {
         draw_prompt(ui_level_unlocked(completed, entrance_here)
-            ? TextFormat("Niveau %d  -  Entree : jouer", entrance_here + 1)
-            : TextFormat("Niveau %d verrouille  -  terminez le niveau %d", entrance_here + 1, entrance_here));
+            ? TextFormat("Niveau %d  -  Entrée : jouer", entrance_here + 1)
+            : TextFormat("Niveau %d verrouillé  -  terminez le niveau %d", entrance_here + 1, entrance_here));
     } else if (portal_prompt != NULL) {
         draw_prompt(portal_prompt);
     }
@@ -261,7 +327,7 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
 
 void hud_draw(const char *world_name, int level_index)
 {
-    const char *hint = TextFormat("%s : recommencer   Echap : pause", settings_key_name(settings_key(ACTION_RESTART)));
+    const char *hint = TextFormat("%s : recommencer   Échap : pause", settings_key_name(settings_key(ACTION_RESTART)));
 
     draw_title_panel(TextFormat("%s  -  Niveau %d", world_name, level_index + 1));
     draw_text_shadowed(hint, HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);

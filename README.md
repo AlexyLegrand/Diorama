@@ -61,16 +61,23 @@ and rebindable movement and restart keys.
 
 ```
 src/
-  core/       orbit camera, settings
+  core/       orbit camera, settings, progress save, sound effects
   world/      level loading, movement, platforms, block types
-  render/     blocks, lighting, vegetation, sky, backdrop
+  render/     blocks, lighting, vegetation, sky, backdrop, 3D title logo, rocket
   entities/   player, crank
-  game/       game states, per-frame update and rendering
-  ui/         menus, HUD, settings screen
+  game/       game states, worlds, menus (title, pause, victory), update and rendering
+  ui/         menus, HUD, settings screen, font and text drawing
 levels/       worlds.txt, title scene, one folder per world (map + levels, .txt and .sky)
-assets/       .glb models, Blender sources, title and world ambiance music (assets/music/world/)
-tests/        unit tests
+assets/       .glb models and Blender sources, music and sound effects (assets/music/),
+              logo, rocket, font (assets/fonts/)
+tests/        unit tests and test levels
 ```
+
+## Font
+
+All text uses **Lilita One** (`assets/fonts/LilitaOne-Regular.ttf`), loaded with the French accented
+characters. It is licensed under the SIL Open Font License (`assets/fonts/OFL.txt`), which must ship
+with the game. If the file is missing, the game falls back to raylib's default font.
 
 ## Level format
 

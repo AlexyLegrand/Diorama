@@ -5,6 +5,14 @@
 #include "raylib.h"
 #include "world/level.h"
 
+void ui_load_font(void);
+
+void ui_unload_font(void);
+
+void ui_text(const char *text, int x, int y, int size, Color color);
+
+int ui_measure(const char *text, int size);
+
 int ui_navigate(int selected, int count);
 
 bool ui_confirm_pressed(void);

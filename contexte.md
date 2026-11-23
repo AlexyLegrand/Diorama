@@ -110,6 +110,11 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - Décor de ciel propre à chaque niveau (fichier `.sky`) : mer de nuages, soleil, nuages,
   îles flottantes, arc-en-ciel, oiseaux.
 - Éclairage et ombrage des blocs.
+- Logo 3D (`assets/logo/logo.glb`) posé au-dessus de l'île de l'écran titre, éclairé comme le décor.
+- Fusée (`assets/rocket/rocket.glb`) animée avec feu et fumée pour voyager entre les mondes ;
+  Sprout a une animation dédiée pour y monter et décoller.
+- Police **Lilita One** (`assets/fonts/LilitaOne-Regular.ttf`, licence OFL dans `OFL.txt`) pour tous
+  les textes, avec les accents français. Sans le fichier, le jeu reprend la police par défaut.
 
 ### Caméra
 
@@ -133,6 +138,9 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 ### Menus et paramètres
 
 - Menus utilisables au clavier, et à la souris (survol, clic, clic droit pour revenir dans les paramètres).
+- Menu pause (Échap) sur la carte et dans les niveaux, avec accès aux paramètres sans quitter la partie.
+- Écran titre : Continuer / Nouvelle partie (avec confirmation) quand une sauvegarde existe.
+- Menu de victoire : Niveau suivant ou Retour à la carte.
 - Progression (niveaux terminés, monde en cours) sauvegardée dans `progress.dat`.
 - Paramètres sauvegardés dans `settings.dat` : volume de la musique, volume des effets sonores, plein écran, affichage des FPS,
   souris activée ou non, touches de déplacement et de recommencement modifiables

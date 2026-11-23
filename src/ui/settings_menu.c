@@ -109,25 +109,25 @@ void settings_menu_draw(int selected, int waiting)
 
     snprintf(rows[SETTINGS_MUSIC_VOLUME], SETTINGS_LABEL_MAX, "Musique :  <  %d%%  >", percent(VOLUME_MUSIC));
     snprintf(rows[SETTINGS_SFX_VOLUME], SETTINGS_LABEL_MAX, "Effets sonores :  <  %d%%  >", percent(VOLUME_SFX));
-    snprintf(rows[SETTINGS_FULLSCREEN], SETTINGS_LABEL_MAX, "Plein ecran : %s", IsWindowFullscreen() ? "Oui" : "Non");
+    snprintf(rows[SETTINGS_FULLSCREEN], SETTINGS_LABEL_MAX, "Plein écran : %s", IsWindowFullscreen() ? "Oui" : "Non");
     snprintf(rows[SETTINGS_SHOW_FPS], SETTINGS_LABEL_MAX, "Afficher les FPS : %s", settings_show_fps() ? "Oui" : "Non");
     snprintf(rows[SETTINGS_MOUSE], SETTINGS_LABEL_MAX, "Souris : %s", settings_mouse_enabled() ? "Oui" : "Non");
     for (int a = 0; a < ACTION_COUNT; a++) {
         const char *key = (a == waiting) ? "..." : settings_key_name(settings_key((Action)a));
         snprintf(rows[SETTINGS_KEYS_FIRST + a], SETTINGS_LABEL_MAX, "%s : %s", settings_action_name((Action)a), key);
     }
-    snprintf(rows[SETTINGS_RESET_KEYS], SETTINGS_LABEL_MAX, "Touches par defaut");
+    snprintf(rows[SETTINGS_RESET_KEYS], SETTINGS_LABEL_MAX, "Touches par défaut");
     snprintf(rows[SETTINGS_BACK], SETTINGS_LABEL_MAX, "Retour");
     for (int i = 0; i < SETTINGS_COUNT; i++) {
         labels[i] = rows[i];
     }
     bool mouse = settings_mouse_enabled();
     const char *hint = (waiting != NOT_WAITING)
-        ? "Appuyez sur une touche (sauf fleches, Entree, Espace)   Echap : annuler"
+        ? "Appuyez sur une touche (sauf flèches, Entrée, Espace)   Échap : annuler"
         : (volume_kind(selected) >= 0)
-            ? (mouse ? "Gauche/Droite ou clic sur < > : regler   Echap / clic droit : retour"
-                     : "Gauche/Droite : regler   Echap : retour")
-            : (mouse ? "Haut/Bas : choisir   Entree / clic : modifier   Echap / clic droit : retour"
-                     : "Haut/Bas : choisir   Entree : modifier   Echap : retour");
-    ui_draw_menu("Parametres", labels, SETTINGS_COUNT, selected, hint);
+            ? (mouse ? "Gauche/Droite ou clic sur < > : régler   Échap / clic droit : retour"
+                     : "Gauche/Droite : régler   Échap : retour")
+            : (mouse ? "Haut/Bas : choisir   Entrée / clic : modifier   Échap / clic droit : retour"
+                     : "Haut/Bas : choisir   Entrée : modifier   Échap : retour");
+    ui_draw_menu("Paramètres", labels, SETTINGS_COUNT, selected, hint);
 }

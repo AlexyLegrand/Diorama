@@ -199,6 +199,7 @@ static void update_world(Game *g)
 static void unload_assets(void)
 {
     title_logo_unload();
+    ui_unload_font();
     rocket_unload();
     sfx_unload();
     backdrop_assets_unload();
@@ -263,6 +264,7 @@ bool game_init(Game *g)
     lighting_load();
     block_render_load();
     title_logo_load();
+    ui_load_font();
     rocket_load();
     sfx_load();
     vegetation_load();

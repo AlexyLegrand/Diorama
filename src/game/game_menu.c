@@ -26,22 +26,22 @@ static const char *MENU_LABELS[MENU_ACTION_COUNT] = {
     [MENU_PLAY]       = "Jouer",
     [MENU_CONTINUE]   = "Continuer",
     [MENU_NEW_GAME]   = "Nouvelle partie",
-    [MENU_SETTINGS]   = "Parametres",
+    [MENU_SETTINGS]   = "Paramètres",
     [MENU_QUIT]       = "Quitter",
     [MENU_CANCEL]     = "Annuler",
     [MENU_ERASE]      = "Oui, tout effacer",
     [MENU_RESUME]     = "Reprendre",
     [MENU_RESTART]    = "Recommencer",
-    [MENU_TO_MAP]     = "Retour a la carte",
+    [MENU_TO_MAP]     = "Retour à la carte",
     [MENU_TO_TITLE]   = "Menu principal",
     [MENU_NEXT_LEVEL] = "Niveau suivant",
 };
 
-static const char *HINT_MOUSE = "Haut/Bas : choisir   Entree / clic : valider   Echap : retour";
-static const char *HINT_KEYS = "Haut/Bas : choisir   Entree : valider   Echap : retour";
-static const char *HINT_TITLE_MOUSE = "Haut/Bas : choisir   Entree / clic : valider   Echap : quitter";
-static const char *HINT_TITLE_KEYS = "Haut/Bas : choisir   Entree : valider   Echap : quitter";
-static const char *HINT_CONFIRM_NEW = "Nouvelle partie : toute la progression sera effacee";
+static const char *HINT_MOUSE = "Haut/Bas : choisir   Entrée / clic : valider   Échap : retour";
+static const char *HINT_KEYS = "Haut/Bas : choisir   Entrée : valider   Échap : retour";
+static const char *HINT_TITLE_MOUSE = "Haut/Bas : choisir   Entrée / clic : valider   Échap : quitter";
+static const char *HINT_TITLE_KEYS = "Haut/Bas : choisir   Entrée : valider   Échap : quitter";
+static const char *HINT_CONFIRM_NEW = "Nouvelle partie : toute la progression sera effacée";
 
 typedef struct {
     const char *title;

@@ -93,18 +93,18 @@ static const char *portal_prompt(const Game *g)
         return NULL;
     }
     if (g->portal < 0 && g->world > 0) {
-        return TextFormat("Retour au monde %s  -  Entree : decoller", g->worlds[g->world - 1].name);
+        return TextFormat("Retour au monde %s  -  Entrée : décoller", g->worlds[g->world - 1].name);
     }
     if (g->portal <= 0) {
         return NULL;
     }
     if (g->world + 1 >= g->world_count) {
-        return "Monde suivant : bientot !";
+        return "Monde suivant : bientôt !";
     }
     if (!game_world_done(g)) {
-        return "Monde suivant verrouille  -  terminez tous les niveaux";
+        return "Monde suivant verrouillé  -  terminez tous les niveaux";
     }
-    return TextFormat("Monde %s  -  Entree : decoller", g->worlds[g->world + 1].name);
+    return TextFormat("Monde %s  -  Entrée : décoller", g->worlds[g->world + 1].name);
 }
 
 static void draw_overlay(const Game *g, Camera3D camera)
@@ -140,8 +140,8 @@ static void draw_transition(const Game *g)
     }
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, fade));
     if (fade >= LOADING_TEXT_MIN_FADE) {
-        int width = MeasureText(LOADING_TEXT, LOADING_FONT_SIZE);
-        DrawText(LOADING_TEXT, GetScreenWidth() - width - LOADING_MARGIN,
+        int width = ui_measure(LOADING_TEXT, LOADING_FONT_SIZE);
+        ui_text(LOADING_TEXT, GetScreenWidth() - width - LOADING_MARGIN,
                  GetScreenHeight() - LOADING_FONT_SIZE - LOADING_MARGIN, LOADING_FONT_SIZE, Fade(RAYWHITE, fade));
     }
 }
