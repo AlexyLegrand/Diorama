@@ -2,6 +2,7 @@
 #define WORLD_H
 
 #include <stddef.h>
+#include "core/i18n.h"
 
 #define WORLD_DIR_MAX 32
 #define WORLD_NAME_MAX 32
@@ -10,10 +11,12 @@
 
 typedef struct {
     char dir[WORLD_DIR_MAX];
-    char name[WORLD_NAME_MAX];
+    char names[LANG_COUNT][WORLD_NAME_MAX];
 } WorldInfo;
 
 int worlds_load(WorldInfo worlds[], int max, const char *path);
+
+const char *world_name(const WorldInfo *world);
 
 void world_level_path(const WorldInfo *world, int level, char *out, size_t size);
 

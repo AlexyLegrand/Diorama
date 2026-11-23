@@ -3,6 +3,7 @@
 #include "core/settings.h"
 #include "core/sfx.h"
 #include "ui/ui.h"
+#include "core/i18n.h"
 
 #define MENU_MAX_ITEMS 5
 
@@ -22,26 +23,20 @@ typedef enum {
     MENU_ACTION_COUNT
 } MenuAction;
 
-static const char *MENU_LABELS[MENU_ACTION_COUNT] = {
-    [MENU_PLAY]       = "Jouer",
-    [MENU_CONTINUE]   = "Continuer",
-    [MENU_NEW_GAME]   = "Nouvelle partie",
-    [MENU_SETTINGS]   = "Paramètres",
-    [MENU_QUIT]       = "Quitter",
-    [MENU_CANCEL]     = "Annuler",
-    [MENU_ERASE]      = "Oui, tout effacer",
-    [MENU_RESUME]     = "Reprendre",
-    [MENU_RESTART]    = "Recommencer",
-    [MENU_TO_MAP]     = "Retour à la carte",
-    [MENU_TO_TITLE]   = "Menu principal",
-    [MENU_NEXT_LEVEL] = "Niveau suivant",
+static const TextId MENU_LABELS[MENU_ACTION_COUNT] = {
+    [MENU_PLAY]       = TXT_PLAY,
+    [MENU_CONTINUE]   = TXT_CONTINUE,
+    [MENU_NEW_GAME]   = TXT_NEW_GAME,
+    [MENU_SETTINGS]   = TXT_SETTINGS,
+    [MENU_QUIT]       = TXT_QUIT,
+    [MENU_CANCEL]     = TXT_CANCEL,
+    [MENU_ERASE]      = TXT_ERASE,
+    [MENU_RESUME]     = TXT_RESUME,
+    [MENU_RESTART]    = TXT_RESTART,
+    [MENU_TO_MAP]     = TXT_TO_MAP,
+    [MENU_TO_TITLE]   = TXT_TO_TITLE,
+    [MENU_NEXT_LEVEL] = TXT_NEXT_LEVEL,
 };
-
-static const char *HINT_MOUSE = "Haut/Bas : choisir   Entrée / clic : valider   Échap : retour";
-static const char *HINT_KEYS = "Haut/Bas : choisir   Entrée : valider   Échap : retour";
-static const char *HINT_TITLE_MOUSE = "Haut/Bas : choisir   Entrée / clic : valider   Échap : quitter";
-static const char *HINT_TITLE_KEYS = "Haut/Bas : choisir   Entrée : valider   Échap : quitter";
-static const char *HINT_CONFIRM_NEW = "Nouvelle partie : toute la progression sera effacée";
 
 typedef struct {
     const char *title;
@@ -58,11 +53,11 @@ static void add(Menu *menu, MenuAction action)
 static Menu build_menu(const Game *g)
 {
     bool mouse = settings_mouse_enabled();
-    Menu menu = { .title = NULL, .hint = mouse ? HINT_MOUSE : HINT_KEYS, .count = 0 };
+    Menu menu = { .title = NULL, .hint = tr(mouse ? TXT_HINT_MENU_MOUSE : TXT_HINT_MENU_KEYS), .count = 0 };
 
     switch (g->state) {
     case STATE_TITLE:
-        menu.hint = mouse ? HINT_TITLE_MOUSE : HINT_TITLE_KEYS;
+        menu.hint = tr(mouse ? TXT_HINT_TITLE_MOUSE : TXT_HINT_TITLE_KEYS);
         if (progress_is_new(&g->progress)) {
             add(&menu, MENU_PLAY);
         } else {
@@ -73,12 +68,12 @@ static Menu build_menu(const Game *g)
         add(&menu, MENU_QUIT);
         break;
     case STATE_CONFIRM_NEW:
-        menu.hint = HINT_CONFIRM_NEW;
+        menu.hint = tr(TXT_HINT_CONFIRM_NEW);
         add(&menu, MENU_CANCEL);
         add(&menu, MENU_ERASE);
         break;
     case STATE_PAUSED:
-        menu.title = "Pause";
+        menu.title = tr(TXT_PAUSE);
         add(&menu, MENU_RESUME);
         if (g->paused_from == STATE_PLAYING) {
             add(&menu, MENU_RESTART);
@@ -87,7 +82,7 @@ static Menu build_menu(const Game *g)
         add(&menu, g->paused_from == STATE_PLAYING ? MENU_TO_MAP : MENU_TO_TITLE);
         break;
     case STATE_WON:
-        menu.title = "Bravo !";
+        menu.title = tr(TXT_WELL_DONE);
         if (g->level_index + 1 < g->level_count) {
             add(&menu, MENU_NEXT_LEVEL);
         }
@@ -219,7 +214,7 @@ void game_menu_draw(const Game *g)
     const char *labels[MENU_MAX_ITEMS];
 
     for (int i = 0; i < menu.count; i++) {
-        labels[i] = MENU_LABELS[menu.items[i]];
+        labels[i] = tr(MENU_LABELS[menu.items[i]]);
     }
     if (menu.count > 0) {
         ui_draw_menu(menu.title, labels, menu.count, g->menu_selected, menu.hint);

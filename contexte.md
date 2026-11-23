@@ -113,6 +113,8 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - Logo 3D (`assets/logo/logo.glb`) posé au-dessus de l'île de l'écran titre, éclairé comme le décor.
 - Fusée (`assets/rocket/rocket.glb`) animée avec feu et fumée pour voyager entre les mondes ;
   Sprout a une animation dédiée pour y monter et décoller.
+- Jeu disponible en **français et en anglais** : tous les textes sont dans `src/core/i18n.c`, et les noms
+  des mondes sont bilingues dans `levels/worlds.txt` (`Prairie|Meadow`).
 - Police **Lilita One** (`assets/fonts/LilitaOne-Regular.ttf`, licence OFL dans `OFL.txt`) pour tous
   les textes, avec les accents français. Sans le fichier, le jeu reprend la police par défaut.
 
@@ -142,7 +144,7 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - Écran titre : Continuer / Nouvelle partie (avec confirmation) quand une sauvegarde existe.
 - Menu de victoire : Niveau suivant ou Retour à la carte.
 - Progression (niveaux terminés, monde en cours) sauvegardée dans `progress.dat`.
-- Paramètres sauvegardés dans `settings.dat` : volume de la musique, volume des effets sonores, plein écran, affichage des FPS,
+- Paramètres sauvegardés dans `settings.dat` : langue (français ou anglais), volume de la musique, volume des effets sonores, plein écran, affichage des FPS,
   souris activée ou non, touches de déplacement et de recommencement modifiables
   (avec retour aux touches par défaut).
 

@@ -5,7 +5,8 @@
 
 const char *glfwGetKeyName(int key, int scancode);
 
-#define SETTINGS_VERSION 4
+#define SETTINGS_VERSION 5
+#define SETTINGS_VERSION_NO_LANGUAGE 4
 #define SETTINGS_VERSION_ONE_VOLUME 3
 #define SETTINGS_VERSION_NO_MOUSE 2
 
@@ -18,12 +19,12 @@ static const int DEFAULT_KEYS[ACTION_COUNT] = {
     [ACTION_RIGHT] = KEY_D,
     [ACTION_RESTART] = KEY_R,
 };
-static const char *ACTION_NAMES[ACTION_COUNT] = {
-    [ACTION_UP] = "Avancer",
-    [ACTION_DOWN] = "Reculer",
-    [ACTION_LEFT] = "Gauche",
-    [ACTION_RIGHT] = "Droite",
-    [ACTION_RESTART] = "Recommencer",
+static const TextId ACTION_NAMES[ACTION_COUNT] = {
+    [ACTION_UP] = TXT_ACTION_UP,
+    [ACTION_DOWN] = TXT_ACTION_DOWN,
+    [ACTION_LEFT] = TXT_ACTION_LEFT,
+    [ACTION_RIGHT] = TXT_ACTION_RIGHT,
+    [ACTION_RESTART] = TXT_ACTION_RESTART,
 };
 static const int KEY_CODE_MAX = 512;
 
@@ -34,7 +35,17 @@ typedef struct {
     bool show_fps;
     int keys[ACTION_COUNT];
     bool mouse;
+    int language;
 } Settings;
+
+typedef struct {
+    int version;
+    float volumes[VOLUME_COUNT];
+    bool fullscreen;
+    bool show_fps;
+    int keys[ACTION_COUNT];
+    bool mouse;
+} SettingsNoLanguage;
 
 typedef struct {
     int version;
@@ -66,11 +77,12 @@ static void reset_defaults(void)
     _settings.show_fps = false;
     memcpy(_settings.keys, DEFAULT_KEYS, sizeof(_settings.keys));
     _settings.mouse = true;
+    _settings.language = LANG_FR;
 }
 
 static bool is_valid(const Settings *s)
 {
-    if (s->version != SETTINGS_VERSION) {
+    if (s->version != SETTINGS_VERSION || s->language < 0 || s->language >= LANG_COUNT) {
         return false;
     }
     for (int i = 0; i < VOLUME_COUNT; i++) {
@@ -108,6 +120,15 @@ void settings_load(void)
         if (one_volume) {
             migrated.mouse = ((const SettingsOneVolume *)data)->mouse;
         }
+        if (is_valid(&migrated)) {
+            _settings = migrated;
+        }
+    } else if (data != NULL && size == (int)sizeof(SettingsNoLanguage)
+               && ((const SettingsNoLanguage *)data)->version == SETTINGS_VERSION_NO_LANGUAGE) {
+        Settings migrated = _settings;
+        memcpy(&migrated, data, sizeof(SettingsNoLanguage));
+        migrated.version = SETTINGS_VERSION;
+        migrated.language = LANG_FR;
         if (is_valid(&migrated)) {
             _settings = migrated;
         }
@@ -188,7 +209,7 @@ void settings_toggle_mouse(void)
 
 const char *settings_action_name(Action action)
 {
-    return ACTION_NAMES[action];
+    return tr(ACTION_NAMES[action]);
 }
 
 const char *settings_key_name(int key)
@@ -200,18 +221,28 @@ const char *settings_key_name(int key)
         return (first < 128) ? TextFormat("%c", toupper(first)) : printable;
     }
     switch (key) {
-    case KEY_SPACE: return "Espace";
-    case KEY_ENTER: return "Entrée";
-    case KEY_TAB: return "Tab";
-    case KEY_BACKSPACE: return "Retour arr.";
-    case KEY_UP: return "Haut";
-    case KEY_DOWN: return "Bas";
-    case KEY_LEFT: return "Flèche G";
-    case KEY_RIGHT: return "Flèche D";
-    case KEY_LEFT_SHIFT: return "Maj G";
-    case KEY_RIGHT_SHIFT: return "Maj D";
-    case KEY_LEFT_CONTROL: return "Ctrl G";
-    case KEY_RIGHT_CONTROL: return "Ctrl D";
+    case KEY_SPACE: return tr(TXT_KEY_SPACE);
+    case KEY_ENTER: return tr(TXT_KEY_ENTER);
+    case KEY_TAB: return tr(TXT_KEY_TAB);
+    case KEY_BACKSPACE: return tr(TXT_KEY_BACKSPACE);
+    case KEY_UP: return tr(TXT_KEY_UP);
+    case KEY_DOWN: return tr(TXT_KEY_DOWN);
+    case KEY_LEFT: return tr(TXT_KEY_LEFT);
+    case KEY_RIGHT: return tr(TXT_KEY_RIGHT);
+    case KEY_LEFT_SHIFT: return tr(TXT_KEY_LEFT_SHIFT);
+    case KEY_RIGHT_SHIFT: return tr(TXT_KEY_RIGHT_SHIFT);
+    case KEY_LEFT_CONTROL: return tr(TXT_KEY_LEFT_CONTROL);
+    case KEY_RIGHT_CONTROL: return tr(TXT_KEY_RIGHT_CONTROL);
     }
-    return TextFormat("Touche %d", key);
+    return TextFormat(tr(TXT_KEY_NUMBER), key);
+}
+
+Language settings_language(void)
+{
+    return (Language)_settings.language;
+}
+
+void settings_toggle_language(void)
+{
+    _settings.language = (_settings.language + 1) % LANG_COUNT;
 }

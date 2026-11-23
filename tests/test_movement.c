@@ -7,6 +7,8 @@
 #include "world/platform.h"
 #include "game/world.h"
 #include "core/progress.h"
+#include "core/i18n.h"
+#include <string.h>
 
 typedef struct {
     int x;
@@ -276,6 +278,43 @@ static void test_level_size_limits(void)
     assert(!level_load(&level, "tests/levels/too_deep.txt"));
 }
 
+static void format_signature(const char *text, char *out)
+{
+    int n = 0;
+
+    for (const char *c = text; *c != '\0'; c++) {
+        if (c[0] == '%' && c[1] != '\0') {
+            out[n++] = c[1];
+            c++;
+        }
+    }
+    out[n] = '\0';
+}
+
+static void test_translations_are_complete(void)
+{
+    char signatures[TXT_COUNT][16];
+
+    for (int lang = 0; lang < LANG_COUNT; lang++) {
+        if (lang > 0) {
+            settings_toggle_language();
+        }
+        for (int id = 0; id < TXT_COUNT; id++) {
+            const char *text = tr((TextId)id);
+            char signature[16];
+            assert(text != NULL && text[0] != '\0');
+            format_signature(text, signature);
+            if (lang == 0) {
+                strcpy(signatures[id], signature);
+            } else if (strcmp(signatures[id], signature) != 0) {
+                fprintf(stderr, "text %d: format %s vs %s\n", id, signatures[id], signature);
+                assert(false);
+            }
+        }
+    }
+    settings_toggle_language();
+}
+
 static void test_key_rebind_swaps_conflict(void)
 {
     settings_reset_keys();
@@ -302,6 +341,7 @@ int main(void)
     test_world_2_level_3();
     test_worlds_are_complete();
     test_level_size_limits();
+    test_translations_are_complete();
     test_key_rebind_swaps_conflict();
     printf("movement tests OK\n");
     return 0;

@@ -2,6 +2,7 @@
 #define SETTINGS_H
 
 #include <stdbool.h>
+#include "core/i18n.h"
 
 typedef enum {
     ACTION_UP,
@@ -43,6 +44,10 @@ bool settings_mouse_enabled(void);
 void settings_toggle_mouse(void);
 
 const char *settings_action_name(Action action);
+
+Language settings_language(void);
+
+void settings_toggle_language(void);
 
 const char *settings_key_name(int key);
 

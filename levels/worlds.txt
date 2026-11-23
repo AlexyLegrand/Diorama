@@ -1,4 +1,4 @@
-# One world per line, in play order: <folder in levels/> <display name>
+# One world per line, in play order: <folder in levels/> <French name>|<English name>
 # A world folder holds map.txt (+ .sky) and level_1.txt ... level_N.txt (+ .sky), one per map entrance.
-world_1 Prairie
-world_2 Ravins
+world_1 Prairie|Meadow
+world_2 Ravins|Ravines

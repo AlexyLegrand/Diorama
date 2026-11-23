@@ -2,12 +2,27 @@
 #include <string.h>
 #include "raylib.h"
 #include "game/world.h"
+#include "core/settings.h"
 
 #define WORLD_LINE_MAX 128
+#define NAME_SEPARATOR '|'
 
 static bool parse_world(const char *line, WorldInfo *world)
 {
-    return sscanf(line, "%31s %31[^\r\n]", world->dir, world->name) == 2;
+    char names[WORLD_LINE_MAX];
+
+    if (sscanf(line, "%31s %127[^\r\n]", world->dir, names) != 2) {
+        return false;
+    }
+    char *separator = strchr(names, NAME_SEPARATOR);
+    if (separator != NULL) {
+        *separator = '\0';
+    }
+    for (int lang = 0; lang < LANG_COUNT; lang++) {
+        const char *name = (lang == LANG_FR || separator == NULL) ? names : separator + 1;
+        snprintf(world->names[lang], WORLD_NAME_MAX, "%.31s", name);
+    }
+    return true;
 }
 
 int worlds_load(WorldInfo worlds[], int max, const char *path)
@@ -49,4 +64,9 @@ void world_level_path(const WorldInfo *world, int level, char *out, size_t size)
     } else {
         snprintf(out, size, "levels/%s/level_%d.txt", world->dir, level + 1);
     }
+}
+
+const char *world_name(const WorldInfo *world)
+{
+    return world->names[settings_language()];
 }

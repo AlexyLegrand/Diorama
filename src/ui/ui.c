@@ -4,6 +4,7 @@
 #include "ui/ui.h"
 #include "core/settings.h"
 #include "core/sfx.h"
+#include "core/i18n.h"
 
 static const int TITLE_SIZE = 80;
 static const int TITLE_Y = 80;
@@ -302,7 +303,7 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
         bool unlocked = ui_level_unlocked(completed, i);
         const char *label = completed[i] ? TextFormat("%d *", i + 1)
                           : unlocked     ? TextFormat("%d", i + 1)
-                                         : TextFormat("%d (fermé)", i + 1);
+                                         : TextFormat(tr(TXT_MAP_LOCKED_LABEL), i + 1);
         Color color = completed[i] ? GOLD : (unlocked ? WHITE : LABEL_LOCKED);
         draw_centered_at(label, (int)screen.x, (int)screen.y, LABEL_SIZE, color);
     }
@@ -312,14 +313,15 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
         snprintf(names[i], KEY_NAME_MAX, "%s", settings_key_name(settings_key(walk_actions[i])));
     }
     char walk[HINT_MAX];
-    snprintf(walk, HINT_MAX, "%s%s%s%s : marcher   Flèches : caméra   Échap : pause",
-             names[0], names[1], names[2], names[3]);
+    char keys[HINT_MAX];
+    snprintf(keys, HINT_MAX, "%s%s%s%s", names[0], names[1], names[2], names[3]);
+    snprintf(walk, HINT_MAX, tr(TXT_MAP_WALK_HINT), keys);
     draw_text_shadowed(walk,
                        HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
     if (entrance_here >= 0) {
         draw_prompt(ui_level_unlocked(completed, entrance_here)
-            ? TextFormat("Niveau %d  -  Entrée : jouer", entrance_here + 1)
-            : TextFormat("Niveau %d verrouillé  -  terminez le niveau %d", entrance_here + 1, entrance_here));
+            ? TextFormat(tr(TXT_MAP_LEVEL_PROMPT), entrance_here + 1)
+            : TextFormat(tr(TXT_MAP_LEVEL_LOCKED), entrance_here + 1, entrance_here));
     } else if (portal_prompt != NULL) {
         draw_prompt(portal_prompt);
     }
@@ -327,8 +329,8 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
 
 void hud_draw(const char *world_name, int level_index)
 {
-    const char *hint = TextFormat("%s : recommencer   Échap : pause", settings_key_name(settings_key(ACTION_RESTART)));
+    const char *hint = TextFormat(tr(TXT_HUD_HINT), settings_key_name(settings_key(ACTION_RESTART)));
 
-    draw_title_panel(TextFormat("%s  -  Niveau %d", world_name, level_index + 1));
+    draw_title_panel(TextFormat(tr(TXT_HUD_TITLE), world_name, level_index + 1));
     draw_text_shadowed(hint, HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
 }

@@ -11,13 +11,13 @@
 #include "render/rocket.h"
 #include "entities/player.h"
 #include "ui/ui.h"
+#include "core/i18n.h"
 #include "ui/settings_menu.h"
 
 static const int FPS_MARGIN = 20;
 static const int FPS_WIDTH = 100;
 static const float PAUSE_SHADE = 0.45f;
 static const float ROCKET_FLOOR_OFFSET = 0.5f;
-static const char *LOADING_TEXT = "Chargement...";
 static const int LOADING_FONT_SIZE = 30;
 static const int LOADING_MARGIN = 40;
 static const float LOADING_TEXT_MIN_FADE = 0.6f;
@@ -93,18 +93,18 @@ static const char *portal_prompt(const Game *g)
         return NULL;
     }
     if (g->portal < 0 && g->world > 0) {
-        return TextFormat("Retour au monde %s  -  Entrée : décoller", g->worlds[g->world - 1].name);
+        return TextFormat(tr(TXT_PORTAL_BACK), world_name(&g->worlds[g->world - 1]));
     }
     if (g->portal <= 0) {
         return NULL;
     }
     if (g->world + 1 >= g->world_count) {
-        return "Monde suivant : bientôt !";
+        return tr(TXT_PORTAL_SOON);
     }
     if (!game_world_done(g)) {
-        return "Monde suivant verrouillé  -  terminez tous les niveaux";
+        return tr(TXT_PORTAL_LOCKED);
     }
-    return TextFormat("Monde %s  -  Entrée : décoller", g->worlds[g->world + 1].name);
+    return TextFormat(tr(TXT_PORTAL_NEXT), world_name(&g->worlds[g->world + 1]));
 }
 
 static void draw_overlay(const Game *g, Camera3D camera)
@@ -114,9 +114,9 @@ static void draw_overlay(const Game *g, Camera3D camera)
 
     if (!in_title && scene == STATE_MAP) {
         ui_draw_map_hud(camera, &g->level, game_completed(g), g->entrance,
-                        g->worlds[g->world].name, portal_prompt(g));
+                        world_name(&g->worlds[g->world]), portal_prompt(g));
     } else if (!in_title) {
-        hud_draw(g->worlds[g->world].name, g->level_index);
+        hud_draw(world_name(&g->worlds[g->world]), g->level_index);
     }
     if (!in_title && scene != g->state) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, PAUSE_SHADE));
@@ -140,8 +140,8 @@ static void draw_transition(const Game *g)
     }
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, fade));
     if (fade >= LOADING_TEXT_MIN_FADE) {
-        int width = ui_measure(LOADING_TEXT, LOADING_FONT_SIZE);
-        ui_text(LOADING_TEXT, GetScreenWidth() - width - LOADING_MARGIN,
+        int width = ui_measure(tr(TXT_LOADING), LOADING_FONT_SIZE);
+        ui_text(tr(TXT_LOADING), GetScreenWidth() - width - LOADING_MARGIN,
                  GetScreenHeight() - LOADING_FONT_SIZE - LOADING_MARGIN, LOADING_FONT_SIZE, Fade(RAYWHITE, fade));
     }
 }

@@ -47,7 +47,7 @@ Run the game from the project root (it loads `levels/` and `assets/` with relati
 | Confirm / enter a level | Enter or Space | Left click (menus) |
 | Pause / back | Escape | Right click (settings) |
 
-Settings (saved to `settings.dat`; game progress goes to `progress.dat`): music volume, sound effects volume, fullscreen, FPS counter, mouse on/off in menus,
+Settings (saved to `settings.dat`; game progress goes to `progress.dat`): language (French or English), music volume, sound effects volume, fullscreen, FPS counter, mouse on/off in menus,
 and rebindable movement and restart keys.
 
 ## Music
@@ -72,6 +72,12 @@ assets/       .glb models and Blender sources, music and sound effects (assets/m
               logo, rocket, font (assets/fonts/)
 tests/        unit tests and test levels
 ```
+
+## Languages
+
+The game is in French and English (switch in **Settings**). Every on-screen text lives in
+`src/core/i18n.c`, one line per text with both languages; `make test` checks that each text exists in both
+languages with the same `%d` / `%s` placeholders.
 
 ## Font
 
@@ -104,7 +110,7 @@ The `.sky` file with the same name places the decor: one object per line,
 
 ## Worlds
 
-Worlds are listed in play order in `levels/worlds.txt`, one per line: `<folder> <display name>`.
+Worlds are listed in play order in `levels/worlds.txt`, one per line: `<folder> <French name>|<English name>`.
 A world unlocks once every level of the previous world is completed; walk onto the `+` portal of
 the world map to travel to it, and onto `-` to go back.
 
