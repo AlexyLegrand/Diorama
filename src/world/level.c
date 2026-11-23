@@ -36,7 +36,7 @@ static bool char_to_cell(char c, Cell *cell)
         *cell = (Cell){ VEGETATION_CHARS[veg].cell, DIR_NORTH };
         return true;
     }
-    if (c >= '1' && c <= '9') {
+    if ((c >= '1' && c <= '9') || c == '+' || c == '-') {
         *cell = (Cell){ BLOCK_EMPTY, DIR_NORTH };
         return true;
     }
@@ -97,6 +97,13 @@ static bool parse_row(Level *level, const char *row, int length, int y, int z, b
                 return false;
             }
             level->decor[level->decor_count++] = (Decor){ VEGETATION_CHARS[veg].kind, { x, y, z } };
+        }
+        if (row[x] == '+') {
+            level->portal_next = (GridPos){ x, y, z };
+            level->has_portal_next = true;
+        } else if (row[x] == '-') {
+            level->portal_prev = (GridPos){ x, y, z };
+            level->has_portal_prev = true;
         }
         if (row[x] >= '1' && row[x] <= '9') {
             int index = row[x] - '1';

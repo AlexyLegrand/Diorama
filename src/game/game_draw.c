@@ -52,8 +52,32 @@ static void draw_scene(Game *g, bool in_menu, Camera3D camera)
         draw_world(&g->level, &g->player, &g->crank);
     }
     if (g->state == STATE_MAP) {
-        ui_draw_entrances(&g->level, g->completed);
+        ui_draw_entrances(&g->level, game_completed(g));
+        bool next_open = g->world + 1 < g->world_count && game_world_done(g);
+        if (g->level.has_portal_next) {
+            ui_draw_portal(g->level.portal_next, next_open);
+        }
+        if (g->level.has_portal_prev) {
+            ui_draw_portal(g->level.portal_prev, g->world > 0);
+        }
     }
+}
+
+static const char *portal_prompt(const Game *g)
+{
+    if (g->portal < 0 && g->world > 0) {
+        return TextFormat("Retour au monde %s  -  Entree", g->worlds[g->world - 1].name);
+    }
+    if (g->portal <= 0) {
+        return NULL;
+    }
+    if (g->world + 1 >= g->world_count) {
+        return "Monde suivant : bientot !";
+    }
+    if (!game_world_done(g)) {
+        return "Monde suivant verrouille  -  terminez tous les niveaux";
+    }
+    return TextFormat("Monde %s  -  Entree : voyager", g->worlds[g->world + 1].name);
 }
 
 static void draw_overlay(const Game *g, Camera3D camera)
@@ -66,9 +90,10 @@ static void draw_overlay(const Game *g, Camera3D camera)
     } else if (g->state == STATE_SETTINGS) {
         settings_menu_draw(g->settings_selected, g->settings_waiting);
     } else if (g->state == STATE_MAP) {
-        ui_draw_map_hud(camera, &g->level, g->completed, g->entrance);
+        ui_draw_map_hud(camera, &g->level, game_completed(g), g->entrance,
+                        g->worlds[g->world].name, portal_prompt(g));
     } else {
-        hud_draw(g->state == STATE_WON, g->level_index);
+        hud_draw(g->state == STATE_WON, g->worlds[g->world].name, g->level_index);
     }
     if (settings_show_fps()) {
         DrawFPS(GetScreenWidth() - FPS_WIDTH, FPS_MARGIN);

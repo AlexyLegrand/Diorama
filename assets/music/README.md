@@ -1,6 +1,7 @@
 # Audio
 
-Drop the `.mp3` files here using these names.
+The game uses two music tracks (below). The other tables list the sound effects still to make:
+drop the `.mp3` files in the matching folder using these names.
 
 ## Music (looping, in world/)
 

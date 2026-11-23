@@ -1,0 +1,11 @@
+cloud_sea            0   -12     0   1.0    0
+sun                -30    20    35   2.5    0
+floating_island    -26    -3   -26   1.6   10
+floating_island     12     0   -38   0.9  -40
+cloud_big           32    -5   -10   1.7    0
+cloud_medium       -14    -6    14   1.1   20
+cloud_medium        16    -8    12   0.9   70
+cloud_small         -9    -9    -8   1.0    0
+bird                -1     6     1   1.0    0
+bird                 2     7    -2   0.8    0
+rainbow              0    -6   -26   1.4    0

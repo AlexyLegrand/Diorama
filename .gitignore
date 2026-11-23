@@ -7,6 +7,7 @@
 
 # User settings (written at runtime)
 /settings.dat
+/progress.dat
 
 # Blender backups
 *.blend1

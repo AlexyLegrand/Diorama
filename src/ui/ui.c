@@ -49,6 +49,7 @@ static const Color PAD_OPEN = { 245, 245, 255, 255 };
 static const Color PAD_DONE = { 255, 203, 0, 255 };
 static const Color PAD_LOCKED = { 90, 90, 100, 255 };
 static const Color LABEL_LOCKED = { 150, 150, 160, 255 };
+static const Color PORTAL_OPEN = { 170, 110, 255, 255 };
 
 static void draw_text_shadowed(const char *text, int x, int y, int size, Color color)
 {
@@ -192,8 +193,33 @@ void ui_draw_entrances(const Level *map, const bool completed[])
     }
 }
 
-void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], int entrance_here)
+void ui_draw_portal(GridPos cell, bool open)
 {
+    Vector3 pad = cell_position(cell);
+    pad.y -= PAD_FLOOR_OFFSET;
+    DrawCylinder(pad, PAD_RADIUS, PAD_RADIUS, PAD_HEIGHT, PAD_SLICES, open ? PORTAL_OPEN : PAD_LOCKED);
+}
+
+static void draw_prompt(const char *prompt)
+{
+    int prompt_w = MeasureText(prompt, PROMPT_SIZE) + 2 * PANEL_PADDING;
+    int prompt_y = GetScreenHeight() - PROMPT_BOTTOM - PROMPT_SIZE;
+    draw_panel(GetScreenWidth() / 2 - prompt_w / 2, prompt_y - HUD_PADDING, prompt_w, PROMPT_SIZE + 2 * HUD_PADDING);
+    draw_centered(prompt, prompt_y, PROMPT_SIZE, WHITE);
+}
+
+static void draw_title_panel(const char *title)
+{
+    int title_w = MeasureText(title, HUD_TITLE_SIZE);
+
+    draw_panel(HUD_MARGIN, HUD_MARGIN, title_w + 2 * HUD_PADDING, HUD_TITLE_SIZE + 2 * HUD_PADDING);
+    DrawText(title, HUD_MARGIN + HUD_PADDING, HUD_MARGIN + HUD_PADDING, HUD_TITLE_SIZE, WHITE);
+}
+
+void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], int entrance_here,
+                     const char *world_name, const char *portal_prompt)
+{
+    draw_title_panel(world_name);
     for (int i = 0; i < map->entrance_count; i++) {
         Vector3 above = cell_position(map->entrances[i]);
         above.y += LABEL_HEIGHT;
@@ -215,26 +241,20 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
              names[0], names[1], names[2], names[3]);
     draw_text_shadowed(walk,
                        HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
-    if (entrance_here < 0) {
-        return;
+    if (entrance_here >= 0) {
+        draw_prompt(ui_level_unlocked(completed, entrance_here)
+            ? TextFormat("Niveau %d  -  Entree : jouer", entrance_here + 1)
+            : TextFormat("Niveau %d verrouille  -  terminez le niveau %d", entrance_here + 1, entrance_here));
+    } else if (portal_prompt != NULL) {
+        draw_prompt(portal_prompt);
     }
-    const char *prompt = ui_level_unlocked(completed, entrance_here)
-        ? TextFormat("Niveau %d  -  Entree : jouer", entrance_here + 1)
-        : TextFormat("Niveau %d verrouille  -  terminez le niveau %d", entrance_here + 1, entrance_here);
-    int prompt_w = MeasureText(prompt, PROMPT_SIZE) + 2 * PANEL_PADDING;
-    int prompt_y = GetScreenHeight() - PROMPT_BOTTOM - PROMPT_SIZE;
-    draw_panel(GetScreenWidth() / 2 - prompt_w / 2, prompt_y - HUD_PADDING, prompt_w, PROMPT_SIZE + 2 * HUD_PADDING);
-    draw_centered(prompt, prompt_y, PROMPT_SIZE, WHITE);
 }
 
-void hud_draw(bool won, int level_index)
+void hud_draw(bool won, const char *world_name, int level_index)
 {
-    const char *title = TextFormat("Niveau %d", level_index + 1);
     const char *hint = TextFormat("%s : recommencer   Echap : carte", settings_key_name(settings_key(ACTION_RESTART)));
-    int title_w = MeasureText(title, HUD_TITLE_SIZE);
 
-    draw_panel(HUD_MARGIN, HUD_MARGIN, title_w + 2 * HUD_PADDING, HUD_TITLE_SIZE + 2 * HUD_PADDING);
-    DrawText(title, HUD_MARGIN + HUD_PADDING, HUD_MARGIN + HUD_PADDING, HUD_TITLE_SIZE, WHITE);
+    draw_title_panel(TextFormat("%s  -  Niveau %d", world_name, level_index + 1));
     draw_text_shadowed(hint, HUD_MARGIN, GetScreenHeight() - HUD_MARGIN - HINT_SIZE, HINT_SIZE, HINT_COLOR);
     if (!won) {
         return;

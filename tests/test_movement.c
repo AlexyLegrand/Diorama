@@ -5,6 +5,8 @@
 #include "core/settings.h"
 #include "world/movement.h"
 #include "world/platform.h"
+#include "game/world.h"
+#include "core/progress.h"
 
 typedef struct {
     int x;
@@ -46,7 +48,7 @@ static Pos start_of(const Level *level)
 static void test_level_1(void)
 {
     Level level;
-    assert(level_load(&level, "levels/level_1.txt"));
+    assert(level_load(&level, "levels/world_1/level_1.txt"));
     Pos pos = walk(&level, start_of(&level), "WWNNNEE");
     assert(pos.x == 2 && pos.y == 1 && pos.z == 1);
     pos = walk(&level, pos, "S");
@@ -61,7 +63,7 @@ static void test_level_1(void)
 static void test_level_2(void)
 {
     Level level;
-    assert(level_load(&level, "levels/level_2.txt"));
+    assert(level_load(&level, "levels/world_1/level_2.txt"));
     Pos pos = walk(&level, start_of(&level), "EN");
     assert(pos.x == 3 && pos.y == 2 && pos.z == 2);
     pos = walk(&level, pos, "NWSE");
@@ -74,7 +76,7 @@ static void test_level_2(void)
 static void test_level_3(void)
 {
     Level level;
-    assert(level_load(&level, "levels/level_3.txt"));
+    assert(level_load(&level, "levels/world_1/level_3.txt"));
     Pos pos = walk(&level, start_of(&level), "NNNNES");
     assert(pos.x == 1 && pos.y == 1 && pos.z == 1);
     assert(level.cells[1][1][2].type == BLOCK_CRATE);
@@ -86,7 +88,7 @@ static void test_level_3(void)
     assert(level.cells[pos.y][pos.x][pos.z].type == BLOCK_STAR);
 
     Level trap;
-    assert(level_load(&trap, "levels/level_3.txt"));
+    assert(level_load(&trap, "levels/world_1/level_3.txt"));
     pos = walk(&trap, start_of(&trap), "NNNE");
     assert(trap.cells[0][2][1].type == BLOCK_CRATE);
     pos = walk(&trap, pos, "E");
@@ -97,7 +99,7 @@ static void test_level_3(void)
 static void test_level_4(void)
 {
     Level level;
-    assert(level_load(&level, "levels/level_4.txt"));
+    assert(level_load(&level, "levels/world_1/level_4.txt"));
     Pos pos = walk(&level, start_of(&level), "NNN");
     assert(pos.x == 0 && pos.y == 1 && pos.z == 1);
     MovePath path;
@@ -137,12 +139,92 @@ static void test_input_direction(void)
 static void test_world_map(void)
 {
     Level map;
-    assert(level_load(&map, "levels/world_map.txt"));
+    assert(level_load(&map, "levels/world_1/map.txt"));
     assert(map.entrance_count == 4);
     Pos start = { map.start_x, map.start_y, map.start_z };
     Pos end = walk(&map, start, "W");
     GridPos first = map.entrances[0];
     assert(end.x == first.x && end.y == first.y && end.z == first.z);
+}
+
+static void test_world_1_portal(void)
+{
+    Level map;
+    assert(level_load(&map, "levels/world_1/map.txt"));
+    assert(map.has_portal_next && !map.has_portal_prev);
+    GridPos last = map.entrances[map.entrance_count - 1];
+    Pos pos = { last.x, last.y, last.z };
+    pos = walk(&map, pos, "WWWWW");
+    assert(pos.x == map.portal_next.x && pos.y == map.portal_next.y && pos.z == map.portal_next.z);
+}
+
+static void test_world_2_level_1(void)
+{
+    Level level;
+    assert(level_load(&level, "levels/world_2/level_1.txt"));
+    Pos pos = walk(&level, start_of(&level), "NNNNESSWSE");
+    assert(level.cells[0][2][3].type == BLOCK_CRATE);
+    pos = walk(&level, pos, "EE");
+    assert(level.cells[0][4][3].type == BLOCK_CRATE);
+    pos = walk(&level, pos, "EENNN");
+    assert(pos.x == 5 && pos.y == 1 && pos.z == 0);
+    assert(level.cells[pos.y][pos.x][pos.z].type == BLOCK_STAR);
+
+    Level trap;
+    assert(level_load(&trap, "levels/world_2/level_1.txt"));
+    pos = walk(&trap, start_of(&trap), "NNNE");
+    assert(trap.cells[0][2][1].type == BLOCK_CRATE);
+    pos = walk(&trap, pos, "EESS");
+    assert(trap.cells[1][3][4].type == BLOCK_CRATE);
+    MovePath path;
+    assert(!movement_plan(&trap, pos.x, pos.y, pos.z, DIR_EAST, &path));
+}
+
+static void test_world_2_level_2(void)
+{
+    Level level;
+    assert(level_load(&level, "levels/world_2/level_2.txt"));
+    Pos pos = walk(&level, start_of(&level), "NNN");
+    PlatformMove move;
+    GridPos player = { pos.x, pos.y, pos.z };
+    assert(platform_rotate(&level, player, &move));
+    pos = walk(&level, pos, "SEEEEE");
+    assert(level.cells[0][6][2].type == BLOCK_CRATE);
+    pos = walk(&level, pos, "ENN");
+    assert(pos.x == 6 && pos.y == 1 && pos.z == 0);
+    assert(level.cells[pos.y][pos.x][pos.z].type == BLOCK_STAR);
+
+    Level trap;
+    assert(level_load(&trap, "levels/world_2/level_2.txt"));
+    pos = walk(&trap, start_of(&trap), "NNE");
+    assert(trap.cells[0][2][2].type == BLOCK_CRATE);
+    pos = walk(&trap, pos, "NN");
+    player = (GridPos){ pos.x, pos.y, pos.z };
+    assert(!platform_rotate(&trap, player, &move));
+}
+
+static void test_worlds_are_complete(void)
+{
+    WorldInfo worlds[WORLD_MAX];
+    int count = worlds_load(worlds, WORLD_MAX, "levels/worlds.txt");
+    assert(count >= 2);
+    for (int w = 0; w < count; w++) {
+        char path[WORLD_PATH_MAX];
+        Level map;
+        world_level_path(&worlds[w], WORLD_MAP, path, sizeof(path));
+        assert(level_load(&map, path));
+        assert(map.entrance_count > 0);
+        assert(map.has_portal_prev == (w > 0));
+        assert(map.has_portal_next == (w + 1 < count));
+        for (int i = 0; i < map.entrance_count; i++) {
+            Level level;
+            world_level_path(&worlds[w], i, path, sizeof(path));
+            if (!level_load(&level, path)) {
+                fprintf(stderr, "missing level %s\n", path);
+            }
+            assert(level_load(&level, path));
+        }
+    }
 }
 
 static void test_key_rebind_swaps_conflict(void)
@@ -165,6 +247,10 @@ int main(void)
     test_level_4();
     test_input_direction();
     test_world_map();
+    test_world_1_portal();
+    test_world_2_level_1();
+    test_world_2_level_2();
+    test_worlds_are_complete();
     test_key_rebind_swaps_conflict();
     printf("movement tests OK\n");
     return 0;

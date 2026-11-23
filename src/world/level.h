@@ -43,6 +43,10 @@ typedef struct {
     int start_z;
     int entrance_count;
     GridPos entrances[LEVEL_MAX_ENTRANCES];
+    bool has_portal_next;
+    bool has_portal_prev;
+    GridPos portal_next;
+    GridPos portal_prev;
     int decor_count;
     Decor decor[LEVEL_MAX_DECOR];
     Cell cells[LEVEL_MAX_HEIGHT][LEVEL_MAX_WIDTH][LEVEL_MAX_DEPTH];

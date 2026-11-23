@@ -21,7 +21,9 @@ SRC     = $(SRC_DIR)/main.c \
           $(SRC_DIR)/ui/ui.c \
           $(SRC_DIR)/ui/settings_menu.c \
           $(SRC_DIR)/game/game.c \
-          $(SRC_DIR)/game/game_draw.c
+          $(SRC_DIR)/game/game_draw.c \
+          $(SRC_DIR)/game/world.c \
+          $(SRC_DIR)/core/progress.c
 OBJ     = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 DEP     = $(OBJ:.o=.d)
 
@@ -49,7 +51,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-TEST_SRC = tests/test_movement.c $(SRC_DIR)/core/settings.c $(SRC_DIR)/world/level.c $(SRC_DIR)/world/movement.c $(SRC_DIR)/world/platform.c \
+TEST_SRC = tests/test_movement.c $(SRC_DIR)/game/world.c $(SRC_DIR)/core/settings.c $(SRC_DIR)/world/level.c $(SRC_DIR)/world/movement.c $(SRC_DIR)/world/platform.c \
            $(SRC_DIR)/world/blocktype.c $(SRC_DIR)/render/block_render.c $(SRC_DIR)/render/lighting.c
 
 test:

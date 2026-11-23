@@ -7,8 +7,8 @@
 #include "entities/player.h"
 #include "entities/crank.h"
 #include "render/backdrop.h"
-
-#define LEVEL_COUNT 4
+#include "core/progress.h"
+#include "game/world.h"
 
 typedef enum {
     STATE_TITLE,
@@ -43,10 +43,15 @@ typedef struct {
     CrankAnim crank;
     Backdrop title_sky;
     Backdrop map_sky;
-    Backdrop level_skies[LEVEL_COUNT];
-    bool completed[LEVEL_COUNT];
+    Backdrop level_skies[LEVEL_MAX_ENTRANCES];
+    WorldInfo worlds[WORLD_MAX];
+    int world_count;
+    int world;
+    int level_count;
+    Progress progress;
     int level_index;
     int entrance;
+    int portal;
     int title_selected;
     int settings_selected;
     int settings_waiting;
@@ -57,6 +62,7 @@ typedef struct {
     float transition_time;
     GameState next_state;
     int next_level;
+    int next_world;
 } Game;
 
 bool game_init(Game *g);
@@ -68,5 +74,9 @@ void game_draw(Game *g);
 void game_unload(Game *g);
 
 float game_fade(const Game *g);
+
+const bool *game_completed(const Game *g);
+
+bool game_world_done(const Game *g);
 
 #endif

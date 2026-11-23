@@ -19,8 +19,11 @@ bool ui_level_unlocked(const bool completed[], int index);
 
 void ui_draw_entrances(const Level *map, const bool completed[]);
 
-void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], int entrance_here);
+void ui_draw_portal(GridPos cell, bool open);
 
-void hud_draw(bool won, int level_index);
+void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], int entrance_here,
+                     const char *world_name, const char *portal_prompt);
+
+void hud_draw(bool won, const char *world_name, int level_index);
 
 #endif

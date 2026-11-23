@@ -22,8 +22,11 @@ se frayer un chemin jusqu'à la graine.
 4. **Victoire** : Sprout fait son animation de victoire, la graine est collectée, le niveau est
    marqué comme terminé (dalle dorée sur la carte) et le niveau suivant est débloqué.
 5. Retour à la carte.
+6. Quand tous les niveaux d'un monde sont terminés, le **portail** de la carte s'ouvre et mène au monde suivant.
 
 Les niveaux se débloquent dans l'ordre : le niveau *N* s'ouvre quand le niveau *N − 1* est terminé.
+Les mondes aussi : un monde s'ouvre quand tous les niveaux du précédent sont terminés. On peut
+revenir à tout moment au monde précédent par son portail.
 Les transitions entre la carte et les niveaux se font par un fondu au noir.
 
 ## Les mécaniques
@@ -54,8 +57,8 @@ redescendre une échelle en marchant vers elle depuis le haut.
 ### Caisses
 
 Marcher contre une caisse la **pousse** d'une case, si la case derrière est libre.
-Une caisse poussée dans le vide **tombe** jusqu'au premier support : elle peut ainsi servir
-à combler un trou ou de marche pour atteindre un étage.
+Une caisse poussée dans le vide **tombe** jusqu'au premier support : elle sert ainsi
+à combler un trou. Elle ne peut pas servir de marche, car Sprout ne monte que par un escalier ou une échelle.
 
 ### Manivelle et plateformes
 
@@ -72,6 +75,10 @@ La graine (`*`) est l'objectif. Il suffit de s'arrêter dessus pour terminer le 
 
 ### Contenu
 
+Les mondes sont listés dans `levels/worlds.txt`, un dossier par monde.
+
+**Monde 1 « Prairie »** (tutoriel, une mécanique par niveau)
+
 | Niveau | Mécanique principale |
 |---|---|
 | Niveau 1 | Échelle : grimper sur un pilier pour atteindre la graine |
@@ -79,7 +86,14 @@ La graine (`*`) est l'objectif. Il suffit de s'arrêter dessus pour terminer le 
 | Niveau 3 | Caisse à pousser dans un trou pour faire un pont |
 | Niveau 4 | Manivelle qui fait pivoter une plateforme pour créer un pont |
 
-En plus des niveaux : une **carte du monde** avec 4 entrées et une **scène de titre**.
+**Monde 2 « Ravins »** (les mécaniques se compliquent)
+
+| Niveau | Mécanique principale |
+|---|---|
+| Niveau 1 | Deux tranchées, deux caisses : aligner la première caisse avant de la pousser |
+| Niveau 2 | Tourner le pont avant de pousser la caisse dessus, sinon le niveau est bloqué |
+
+En plus des niveaux : une **carte** par monde, reliées par des portails, et une **scène de titre**.
 
 ### Visuel
 
@@ -108,6 +122,7 @@ En plus des niveaux : une **carte du monde** avec 4 entrées et une **scène de 
 ### Menus et paramètres
 
 - Menus utilisables au clavier, et à la souris (survol, clic, clic droit pour revenir dans les paramètres).
+- Progression (niveaux terminés, monde en cours) sauvegardée dans `progress.dat`.
 - Paramètres sauvegardés dans `settings.dat` : volume, plein écran, affichage des FPS,
   souris activée ou non, touches de déplacement et de recommencement modifiables
   (avec retour aux touches par défaut).
@@ -115,13 +130,14 @@ En plus des niveaux : une **carte du monde** avec 4 entrées et une **scène de 
 ### Technique
 
 - Compilation avec `make` sous Linux et sous Windows (MSYS2 UCRT64).
-- Tests unitaires du déplacement (`make test`).
+- Tests unitaires (`make test`) : déplacement, solution et pièges de chaque niveau du monde 2,
+  et vérification que chaque monde a sa carte, ses portails et ses niveaux.
 - Niveaux décrits en fichiers texte (voir le README), faciles à créer et à modifier.
 
 ## Limites actuelles et pistes
 
-- **La progression n'est pas sauvegardée** : les niveaux terminés sont perdus à la fermeture du jeu.
-- Il n'y a que 4 niveaux. Ajouter un niveau demande de modifier `LEVEL_PATHS` et `LEVEL_COUNT` dans le code.
+- Seulement 6 niveaux sur 2 mondes. Ajouter un niveau ou un monde ne demande que des fichiers (voir le README).
+- Les thèmes des mondes se limitent au ciel : pas encore de blocs ni de végétation propres à chaque monde.
 - Pas encore d'effets sonores (pas, caisse, manivelle, interface...).
 - La souris ne sert que dans les menus et pour le zoom : pas de clic sur la carte, ni de caméra à la souris.
 - Pas d'annulation de coup : seul « recommencer le niveau » existe.

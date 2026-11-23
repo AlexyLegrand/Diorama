@@ -47,7 +47,7 @@ Run the game from the project root (it loads `levels/` and `assets/` with relati
 | Confirm / enter a level | Enter or Space | Left click (menus) |
 | Back | Escape | Right click (settings) |
 
-Settings (saved to `settings.dat`): volume, fullscreen, FPS counter, mouse on/off in menus,
+Settings (saved to `settings.dat`; game progress goes to `progress.dat`): volume, fullscreen, FPS counter, mouse on/off in menus,
 and rebindable movement and restart keys.
 
 ## Music
@@ -67,8 +67,8 @@ src/
   entities/   player, crank
   game/       game states, per-frame update and rendering
   ui/         menus, HUD, settings screen
-levels/       levels (.txt) and sky decor (.sky)
-assets/       .glb models and Blender sources
+levels/       worlds.txt, title scene, one folder per world (map + levels, .txt and .sky)
+assets/       .glb models, Blender sources, title and world ambiance music (assets/music/world/)
 tests/        unit tests
 ```
 
@@ -89,10 +89,23 @@ from bottom to top. Each layer is a grid of characters (max 8×6×8).
 | `^ > v <` | stairs (N E S W) | `I` | ivy (on ground) |
 | `n e s w` | ladder (N E S W) | `V` | vine (on ground) |
 | `1`–`9` | level entrance (world map) | | |
+| `+` | portal to the next world (world map) | | |
+| `-` | portal to the previous world (world map) | | |
 
 The `.sky` file with the same name places the decor: one object per line,
 `kind x y z scale yaw` (position relative to the level center), `#` for comments.
 
-To add a level: create `level_N.txt` (+ `.sky`), add it to `LEVEL_PATHS`
-in `src/game/game.c`, increment `LEVEL_COUNT` in `src/game/game.h`, and place
-entrance `N` on `levels/world_map.txt`.
+## Worlds
+
+Worlds are listed in play order in `levels/worlds.txt`, one per line: `<folder> <display name>`.
+A world unlocks once every level of the previous world is completed; walk onto the `+` portal of
+the world map to travel to it, and onto `-` to go back.
+
+Each world folder `levels/<folder>/` holds:
+- `map.txt` (+ `map.sky`): the world map, with one entrance `1`–`9` per level, a `-` portal
+  (except the first world) and a `+` portal (except the last world);
+- `level_1.txt` … `level_N.txt` (+ `.sky`): one level per map entrance.
+
+To add a level, create `level_N.txt` in the world folder and place entrance `N` on its `map.txt`.
+To add a world, create its folder and add a line to `levels/worlds.txt`.
+`make test` checks that every world has its map, portals and level files.
