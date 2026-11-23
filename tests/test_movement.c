@@ -221,6 +221,23 @@ static void test_world_2_level_3(void)
     assert(push.cells[1][11][2].type == BLOCK_CRATE);
 }
 
+static bool has_free_neighbor(const Level *map, GridPos pad)
+{
+    static const int DX[4] = { 0, 1, 0, -1 };
+    static const int DZ[4] = { 1, 0, -1, 0 };
+
+    for (int i = 0; i < 4; i++) {
+        int x = pad.x + DX[i];
+        int z = pad.z + DZ[i];
+        bool inside = x >= 0 && x < map->width && z >= 0 && z < map->depth && pad.y > 0;
+        if (inside && map->cells[pad.y][x][z].type == BLOCK_EMPTY
+            && BLOCK_INFO[map->cells[pad.y - 1][x][z].type].walkable_on) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static void test_worlds_are_complete(void)
 {
     WorldInfo worlds[WORLD_MAX];
@@ -234,6 +251,8 @@ static void test_worlds_are_complete(void)
         assert(map.entrance_count > 0);
         assert(map.has_portal_prev == (w > 0));
         assert(map.has_portal_next == (w + 1 < count));
+        assert(!map.has_portal_next || has_free_neighbor(&map, map.portal_next));
+        assert(!map.has_portal_prev || has_free_neighbor(&map, map.portal_prev));
         for (int i = 0; i < map.entrance_count; i++) {
             Level level;
             world_level_path(&worlds[w], i, path, sizeof(path));

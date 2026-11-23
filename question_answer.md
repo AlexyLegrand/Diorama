@@ -66,10 +66,10 @@ Chaque question indique la proposition faite, la réponse donnée et son statut.
 - **Proposé** : une scène où Sprout plante les graines dorées récoltées, puis les crédits.
 - **Réponse** : une fin est **à créer**, par exemple **une scène 3D**.
 
-### Q13 — Pourquoi des graines dorées ❓
+### Q13 — Pourquoi des graines dorées 🕓
 - **Proposé** : Sprout récolte les graines pour faire repousser un grand arbre. L'arbre grandit sur
   l'écran titre à chaque monde terminé, et la scène finale le montre en fleurs. Sans dialogues.
-- **Réponse** : —
+- **Réponse** : très bonne idée, on travaille dessus
 
 ---
 
@@ -79,9 +79,9 @@ Chaque question indique la proposition faite, la réponse donnée et son statut.
 - **Proposé** : annulation illimitée (Z / Ctrl+Z), pour qu'un joueur détente ne soit jamais coincé.
 - **Réponse** : **non pour l'instant**, on garde le principe de **recommencer le niveau (R)**.
 
-### Q15 — Indice quand le joueur est bloqué ❓
+### Q15 — Indice quand le joueur est bloqué ✅
 - **Proposé** : afficher « Bloqué ? Appuie sur R pour recommencer » après environ 20 s d'inactivité dans un niveau.
-- **Réponse** : —
+- **Réponse** : le jeu est très simple au départ pas besoin d'aide
 
 ---
 
@@ -93,19 +93,19 @@ Chaque question indique la proposition faite, la réponse donnée et son statut.
 - **Réponse** : oui, l'objectif est de pouvoir faire des niveaux plus grands, en hauteur comme en largeur et en profondeur.
 - **Appliqué** : limite à 12 × 10 × 12. La caméra recule automatiquement selon la taille du niveau.
 
-### Q16 — Manette ❓
+### Q16 — Manette 🕓
 - **Proposé** : support manette (stick ou croix pour marcher, caméra au stick droit ou aux gâchettes,
   A pour valider, B pour revenir). raylib le gère nativement.
-- **Réponse** : —
+- **Réponse** : à voir dans le futur
 
-### Q17 — Langue ❓
+### Q17 — Langue 🕓
 - **Proposé** : français et anglais au choix dans les paramètres, avec une vraie police qui gère les accents
   (aujourd'hui « Parametres », faute d'accents dans la police par défaut).
-- **Réponse** : —
+- **Réponse** : à voir dans le futur
 
-### Q18 — Plateformes ❓
+### Q18 — Plateformes 🕓
 - **Proposé** : builds Windows et Linux uniquement, macOS plus tard si quelqu'un peut le compiler.
-- **Réponse** : —
+- **Réponse** : à voir dans le futur
 
 ### Q12 — Production des visuels par thème ❓
 - **Proposé** : un dossier de modèles `.glb` par thème (par exemple `assets/themes/ice/block.glb`), avec les mêmes

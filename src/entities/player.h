@@ -14,6 +14,7 @@ typedef enum {
     ANIM_PUSH_START,
     ANIM_PUSH,
     ANIM_CRANK,
+    ANIM_ROCKET_LAUNCH,
     ANIM_COUNT
 } PlayerAnim;
 
@@ -63,6 +64,12 @@ void player_celebrate(Player *player, float camera_yaw);
 bool player_is_idle(const Player *player);
 
 bool player_pushing(const Player *player);
+
+void player_board_rocket(Player *player, Vector3 start, Direction dir);
+
+float player_model_angle(Direction dir);
+
+float player_anim_duration(const Player *player, PlayerAnim anim);
 
 void player_set_crank(Player *player, bool active, float progress);
 

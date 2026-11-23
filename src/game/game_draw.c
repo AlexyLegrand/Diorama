@@ -8,18 +8,21 @@
 #include "render/vegetation.h"
 #include "render/sky.h"
 #include "render/title_logo.h"
+#include "render/rocket.h"
+#include "entities/player.h"
 #include "ui/ui.h"
 #include "ui/settings_menu.h"
 
 static const int FPS_MARGIN = 20;
 static const int FPS_WIDTH = 100;
 static const float PAUSE_SHADE = 0.45f;
+static const float ROCKET_FLOOR_OFFSET = 0.5f;
 static const char *LOADING_TEXT = "Chargement...";
 static const int LOADING_FONT_SIZE = 30;
 static const int LOADING_MARGIN = 40;
 static const float LOADING_TEXT_MIN_FADE = 0.6f;
 
-static void draw_world(const Level *level, const Player *player, const CrankAnim *crank)
+static void draw_world(const Level *level, const Player *player, const CrankAnim *crank, bool show_player)
 {
     GridPos crate_cell;
     Vector3 crate_position;
@@ -35,7 +38,22 @@ static void draw_world(const Level *level, const Player *player, const CrankAnim
     if (crank->active) {
         crank_draw_platform(crank);
     }
-    player_draw(player);
+    if (show_player) {
+        player_draw(player);
+    }
+}
+
+static void draw_rocket(const Game *g, GridPos pad)
+{
+    bool launching = g->launching && g->launch_pad.x == pad.x && g->launch_pad.y == pad.y
+                     && g->launch_pad.z == pad.z;
+    Vector3 base = { (float)pad.x, pad.y - ROCKET_FLOOR_OFFSET, (float)pad.z };
+
+    if (launching && g->launch_done) {
+        return;
+    }
+    rocket_draw(base, launching ? player_model_angle(g->launch_dir) : 0.0f,
+                launching ? g->launch_time : 0.0f);
 }
 
 static void draw_scene(Game *g, bool in_menu, Camera3D camera)
@@ -54,24 +72,28 @@ static void draw_scene(Game *g, bool in_menu, Camera3D camera)
         player_draw(&g->title_player);
         title_logo_draw(scene_center);
     } else {
-        draw_world(&g->level, &g->player, &g->crank);
+        draw_world(&g->level, &g->player, &g->crank, !g->launch_done);
     }
     if (!in_menu && scene == STATE_MAP) {
         ui_draw_entrances(&g->level, game_completed(g));
-        bool next_open = g->world + 1 < g->world_count && game_world_done(g);
-        if (g->level.has_portal_next) {
-            ui_draw_portal(g->level.portal_next, next_open);
+        if (game_rocket_next(g)) {
+            draw_rocket(g, g->level.portal_next);
+        } else if (g->level.has_portal_next) {
+            ui_draw_portal(g->level.portal_next, false);
         }
-        if (g->level.has_portal_prev) {
-            ui_draw_portal(g->level.portal_prev, g->world > 0);
+        if (game_rocket_prev(g)) {
+            draw_rocket(g, g->level.portal_prev);
         }
     }
 }
 
 static const char *portal_prompt(const Game *g)
 {
+    if (g->launching) {
+        return NULL;
+    }
     if (g->portal < 0 && g->world > 0) {
-        return TextFormat("Retour au monde %s  -  Entree", g->worlds[g->world - 1].name);
+        return TextFormat("Retour au monde %s  -  Entree : decoller", g->worlds[g->world - 1].name);
     }
     if (g->portal <= 0) {
         return NULL;
@@ -82,7 +104,7 @@ static const char *portal_prompt(const Game *g)
     if (!game_world_done(g)) {
         return "Monde suivant verrouille  -  terminez tous les niveaux";
     }
-    return TextFormat("Monde %s  -  Entree : voyager", g->worlds[g->world + 1].name);
+    return TextFormat("Monde %s  -  Entree : decoller", g->worlds[g->world + 1].name);
 }
 
 static void draw_overlay(const Game *g, Camera3D camera)

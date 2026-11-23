@@ -58,6 +58,12 @@ typedef struct {
     Music wind;
     bool was_on_spot;
     double entrance_sound_time;
+    bool launching;
+    float launch_time;
+    Direction launch_dir;
+    GridPos launch_pad;
+    int launch_target;
+    bool launch_done;
     TransitionPhase transition;
     float transition_time;
     GameState next_state;
@@ -80,6 +86,10 @@ const bool *game_completed(const Game *g);
 bool game_world_done(const Game *g);
 
 bool game_in_title_scene(const Game *g);
+
+bool game_rocket_next(const Game *g);
+
+bool game_rocket_prev(const Game *g);
 
 GameState game_scene_state(const Game *g);
 

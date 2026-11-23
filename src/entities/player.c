@@ -6,7 +6,7 @@
 #include <string.h>
 #include <math.h>
 
-#define PLAYER_MODEL_PATH "assets/crank/sprout.glb"
+#define PLAYER_MODEL_PATH "assets/rocket/sprout.glb"
 #define PLAYER_SCALE      0.7f
 #define ANIM_FPS          60.0f
 #define BLEND_DURATION    0.2f
@@ -26,9 +26,10 @@ static const char *ANIM_NAMES[ANIM_COUNT] = {
     [ANIM_PUSH_START] = "PushStart",
     [ANIM_PUSH]       = "Push",
     [ANIM_CRANK]      = "Crank",
+    [ANIM_ROCKET_LAUNCH] = "RocketLaunch",
 };
 
-static float direction_to_model_angle(Direction dir)
+float player_model_angle(Direction dir)
 {
     static const float angles[] = {
         [DIR_SOUTH] = 0.0f,
@@ -109,7 +110,7 @@ void player_unload(Player *player)
 
 static bool anim_loops(PlayerAnim anim)
 {
-    return anim != ANIM_PUSH_START;
+    return anim != ANIM_PUSH_START && anim != ANIM_ROCKET_LAUNCH;
 }
 
 static float advance_frame(float frame, ModelAnimation anim, float dt, bool loops)
@@ -119,7 +120,7 @@ static float advance_frame(float frame, ModelAnimation anim, float dt, bool loop
     float next = frame + dt * ANIM_FPS;
 
     if (!loops) {
-        return fminf(next, last_frame);
+        return fminf(next, fmaxf(last_frame - 1.0f, 0.0f));
     }
     while (next >= frame_count) {
         next -= frame_count;
@@ -447,11 +448,29 @@ void player_draw(const Player *player)
     Color shadow_color = Fade(BLACK, 0.3f);
     DrawCylinder(shadow_position, 0.25f, 0.25f, 0.005f, 16, shadow_color);
 
-    float angle = direction_to_model_angle(player->dir);
+    float angle = player_model_angle(player->dir);
     DrawModelEx(player->model, position, axis, angle, scale, WHITE);
 }
 
 bool player_pushing(const Player *player)
 {
     return player->moving && player->path.push && player->push_wait <= 0.0f;
+}
+
+void player_board_rocket(Player *player, Vector3 start, Direction dir)
+{
+    player->celebrating = true;
+    player->lean = 0.0f;
+    player->dir = dir;
+    player->position = start;
+    player_set_anim(player, ANIM_ROCKET_LAUNCH);
+    player->frame = 0.0f;
+    player->blend = 1.0f;
+}
+
+float player_anim_duration(const Player *player, PlayerAnim anim)
+{
+    int index = player->anim_lookup[anim];
+
+    return index == -1 ? 0.0f : (float)player->anims[index].keyframeCount / ANIM_FPS;
 }

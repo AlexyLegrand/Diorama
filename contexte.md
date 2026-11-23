@@ -26,7 +26,8 @@ se frayer un chemin jusqu'à la graine.
 
 À tout moment sur la carte ou dans un niveau, **Échap** ouvre le **menu pause** : Reprendre,
 Recommencer (dans un niveau), Paramètres, puis Retour à la carte (niveau) ou Menu principal (carte).
-6. Quand tous les niveaux d'un monde sont terminés, le **portail** de la carte s'ouvre et mène au monde suivant.
+6. Quand tous les niveaux d'un monde sont terminés, une **fusée** apparaît sur le portail de la carte :
+   en validant dessus, Sprout monte dedans et décolle vers le monde suivant (animation et son synchronisés).
 
 Les niveaux se débloquent dans l'ordre : le niveau *N* s'ouvre quand le niveau *N − 1* est terminé.
 Les mondes aussi : un monde s'ouvre quand tous les niveaux du précédent sont terminés. On peut

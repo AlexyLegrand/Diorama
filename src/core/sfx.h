@@ -24,6 +24,7 @@ typedef enum {
     SFX_UI_TRANSITION,
     SFX_UI_RESTART,
     SFX_UI_UNLOCK,
+    SFX_ROCKET_LAUNCH,
     SFX_COUNT
 } Sfx;
 
