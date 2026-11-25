@@ -70,7 +70,9 @@ static void draw_scene(Game *g, bool in_menu, Camera3D camera)
         level_draw(&g->title_scene, NULL, false);
         vegetation_draw(&g->title_scene);
         player_draw(&g->title_player);
-        title_logo_draw(scene_center);
+        if (g->state != STATE_SETTINGS) {
+            title_logo_draw(scene_center);
+        }
     } else {
         draw_world(&g->level, &g->player, &g->crank, !g->launch_done);
     }
