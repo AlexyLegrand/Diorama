@@ -5,6 +5,10 @@
 #include "raylib.h"
 #include "world/level.h"
 
+float ui_scale(void);
+
+int ui_px(int pixels);
+
 void ui_load_font(void);
 
 void ui_unload_font(void);
@@ -12,6 +16,15 @@ void ui_unload_font(void);
 void ui_text(const char *text, int x, int y, int size, Color color);
 
 int ui_measure(const char *text, int size);
+
+typedef enum {
+    MENU_ANCHOR_CENTER,
+    MENU_ANCHOR_BOTTOM
+} MenuAnchor;
+
+void ui_set_menu_anchor(MenuAnchor anchor);
+
+bool ui_menu_is_row(void);
 
 int ui_navigate(int selected, int count);
 

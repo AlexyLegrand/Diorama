@@ -17,4 +17,6 @@ void game_menu_open_pause(Game *g);
 
 void game_menu_draw(const Game *g);
 
+void game_apply_menu_anchor(const Game *g);
+
 #endif

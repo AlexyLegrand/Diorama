@@ -57,7 +57,8 @@ static Menu build_menu(const Game *g)
 
     switch (g->state) {
     case STATE_TITLE:
-        menu.hint = tr(mouse ? TXT_HINT_TITLE_MOUSE : TXT_HINT_TITLE_KEYS);
+        menu.hint = ui_menu_is_row() ? tr(mouse ? TXT_HINT_ROW_MOUSE : TXT_HINT_ROW_KEYS)
+                                      : tr(mouse ? TXT_HINT_TITLE_MOUSE : TXT_HINT_TITLE_KEYS);
         if (progress_is_new(&g->progress)) {
             add(&menu, MENU_PLAY);
         } else {

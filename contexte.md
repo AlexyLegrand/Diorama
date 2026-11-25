@@ -142,6 +142,10 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - Menus utilisables au clavier, et à la souris (survol, clic, clic droit pour revenir dans les paramètres).
 - Menu pause (Échap) sur la carte et dans les niveaux, avec accès aux paramètres sans quitter la partie.
 - Écran titre : Continuer / Nouvelle partie (avec confirmation) quand une sauvegarde existe.
+  Le menu titre est une rangée horizontale sous l'île (`TITLE_MENU_ANCHOR` dans `src/game/game.c`,
+  `MENU_ANCHOR_CENTER` pour revenir à l'ancien menu centré).
+- Fenêtre redimensionnable, interface qui s'adapte à la taille de la fenêtre, anticrénelage (MSAA 4×)
+  et icône de fenêtre (`assets/logo/icon.png`).
 - Menu de victoire : Niveau suivant ou Retour à la carte.
 - Progression (niveaux terminés, monde en cours) sauvegardée dans `progress.dat`.
 - Paramètres sauvegardés dans `settings.dat` : langue (français ou anglais), volume de la musique, volume des effets sonores, plein écran, affichage des FPS,

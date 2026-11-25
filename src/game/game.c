@@ -34,6 +34,7 @@ static const float TITLE_SWAY_SPEED = 0.25f;
 static const float TITLE_PITCH = 22.0f * DEG2RAD;
 static const float TITLE_TARGET_RAISE = 0.6f;
 static const float TITLE_CAMERA_DISTANCE = 7.0f;
+static const MenuAnchor TITLE_MENU_ANCHOR = MENU_ANCHOR_BOTTOM;
 
 static bool start_level(const char *path, Level *level, Player *player, OrbitCamera *orbit, CrankAnim *crank)
 {
@@ -555,8 +556,16 @@ static void update_music(Game *g)
     sfx_loop(SFX_LOOP_PLATFORM, in_world && g->crank.active);
 }
 
+void game_apply_menu_anchor(const Game *g)
+{
+    bool title_menu = g->state == STATE_TITLE || g->state == STATE_CONFIRM_NEW;
+
+    ui_set_menu_anchor(title_menu ? TITLE_MENU_ANCHOR : MENU_ANCHOR_CENTER);
+}
+
 void game_update(Game *g)
 {
+    game_apply_menu_anchor(g);
     bool back = IsKeyPressed(KEY_ESCAPE);
     bool confirm = ui_confirm_pressed();
 

@@ -124,7 +124,7 @@ void settings_menu_draw(int selected, int waiting)
     snprintf(rows[SETTINGS_LANGUAGE], SETTINGS_LABEL_MAX, tr(TXT_SET_LANGUAGE), tr(TXT_LANGUAGE_NAME));
     for (int a = 0; a < ACTION_COUNT; a++) {
         const char *key = (a == waiting) ? "..." : settings_key_name(settings_key((Action)a));
-        snprintf(rows[SETTINGS_KEYS_FIRST + a], SETTINGS_LABEL_MAX, "%s : %s", settings_action_name((Action)a), key);
+        snprintf(rows[SETTINGS_KEYS_FIRST + a], SETTINGS_LABEL_MAX, tr(TXT_SET_KEY_ROW), settings_action_name((Action)a), key);
     }
     snprintf(rows[SETTINGS_RESET_KEYS], SETTINGS_LABEL_MAX, "%s", tr(TXT_SET_RESET_KEYS));
     snprintf(rows[SETTINGS_BACK], SETTINGS_LABEL_MAX, "%s", tr(TXT_SET_BACK));

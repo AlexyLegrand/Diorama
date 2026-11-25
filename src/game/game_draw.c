@@ -140,9 +140,9 @@ static void draw_transition(const Game *g)
     }
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, fade));
     if (fade >= LOADING_TEXT_MIN_FADE) {
-        int width = ui_measure(tr(TXT_LOADING), LOADING_FONT_SIZE);
-        ui_text(tr(TXT_LOADING), GetScreenWidth() - width - LOADING_MARGIN,
-                 GetScreenHeight() - LOADING_FONT_SIZE - LOADING_MARGIN, LOADING_FONT_SIZE, Fade(RAYWHITE, fade));
+        int width = ui_measure(tr(TXT_LOADING), ui_px(LOADING_FONT_SIZE));
+        ui_text(tr(TXT_LOADING), GetScreenWidth() - width - ui_px(LOADING_MARGIN),
+                 GetScreenHeight() - ui_px(LOADING_FONT_SIZE) - ui_px(LOADING_MARGIN), ui_px(LOADING_FONT_SIZE), Fade(RAYWHITE, fade));
     }
 }
 
@@ -158,6 +158,7 @@ void game_draw(Game *g)
     draw_scene(g, in_menu, camera);
     EndMode3D();
     sky_draw_vignette();
+    game_apply_menu_anchor(g);
     draw_overlay(g, camera);
     draw_transition(g);
     EndDrawing();
