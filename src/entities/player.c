@@ -6,13 +6,14 @@
 #include <string.h>
 #include <math.h>
 
-#define PLAYER_MODEL_PATH "assets/rocket/sprout.glb"
+#define PLAYER_MODEL_PATH "assets/sprout/sprout.glb"
 #define PLAYER_SCALE      0.7f
 #define ANIM_FPS          60.0f
 #define BLEND_DURATION    0.2f
 #define WALK_SPEED        2.5f
 #define CLIMB_SPEED       1.5f
 #define CLIMB_SOUND_INTERVAL (1.0f / CLIMB_SPEED)
+#define BUMP_HARD_LOCK    1.0f
 #define CRATE_FALL_SPEED  5.0f
 #define PUSH_LEAN         0.2f
 #define LEAN_SPEED        10.0f
@@ -27,6 +28,8 @@ static const char *ANIM_NAMES[ANIM_COUNT] = {
     [ANIM_PUSH]       = "Push",
     [ANIM_CRANK]      = "Crank",
     [ANIM_ROCKET_LAUNCH] = "RocketLaunch",
+    [ANIM_BUMP]       = "BumpLight",
+    [ANIM_BUMP_HARD]  = "Bump",
 };
 
 float player_model_angle(Direction dir)
@@ -82,6 +85,9 @@ void player_place(Player *player, int x, int y, int z)
     player->was_pushing = false;
     player->lean = 0.0f;
     player->cranking = false;
+    player->bumping = false;
+    player->bump_lock = 0.0f;
+    player->just_arrived = false;
 }
 
 void player_set_crank(Player *player, bool active, float progress)
@@ -110,7 +116,7 @@ void player_unload(Player *player)
 
 static bool anim_loops(PlayerAnim anim)
 {
-    return anim != ANIM_PUSH_START && anim != ANIM_ROCKET_LAUNCH;
+    return anim != ANIM_PUSH_START && anim != ANIM_ROCKET_LAUNCH && anim != ANIM_BUMP && anim != ANIM_BUMP_HARD;
 }
 
 static float advance_frame(float frame, ModelAnimation anim, float dt, bool loops)
@@ -190,10 +196,31 @@ static bool path_climbs(const MovePath *path)
     return false;
 }
 
+static void start_bump(Player *player, bool hard)
+{
+    PlayerAnim anim = hard ? ANIM_BUMP_HARD : ANIM_BUMP;
+
+    player_set_anim(player, anim);
+    player->frame = 0.0f;
+    player->bump_anim = anim;
+    player->bumping = player->anim_lookup[anim] != -1;
+    player->bump_lock = (hard && player->bumping) ? BUMP_HARD_LOCK : 0.0f;
+}
+
+static bool bump_finished(const Player *player)
+{
+    int index = player->anim_lookup[player->bump_anim];
+
+    return index == -1 || player->frame >= player->anims[index].keyframeCount - 2;
+}
+
 static void try_start_move(Player *player, Level *level, float camera_yaw)
 {
     int input_x;
     int input_y;
+    bool walked_into = player->just_arrived;
+
+    player->just_arrived = false;
     read_input(&input_x, &input_y);
     if (input_x == 0 && input_y == 0) {
         return;
@@ -204,9 +231,11 @@ static void try_start_move(Player *player, Level *level, float camera_yaw)
     if (!movement_plan(level, player->x, player->y, player->z, dir, &player->path)) {
         bool fresh_press = IsKeyPressed(settings_key(ACTION_UP)) || IsKeyPressed(settings_key(ACTION_LEFT))
                            || IsKeyPressed(settings_key(ACTION_DOWN)) || IsKeyPressed(settings_key(ACTION_RIGHT));
-        player->crank_requested = fresh_press && facing_crank(player, level, dir);
-        if (fresh_press && !player->crank_requested) {
+        player->crank_requested = (fresh_press || walked_into) && facing_crank(player, level, dir);
+        bool already_bumping = player->bumping && !bump_finished(player);
+        if ((fresh_press || walked_into) && !player->crank_requested && !already_bumping) {
             sfx_play(SFX_BUMP);
+            start_bump(player, walked_into);
         }
         return;
     }
@@ -227,6 +256,7 @@ static void try_start_move(Player *player, Level *level, float camera_yaw)
     }
     player->climb_sound_timer = 0.0f;
     player->moving = true;
+    player->bumping = false;
     player->path_index = 0;
     player->segment_start = player->position;
     player->segment_progress = 0.0f;
@@ -324,6 +354,7 @@ static void advance_move(Player *player, float dt)
     if (player->path_index >= player->path.count) {
         player->moving = false;
         player->was_pushing = player->path.push;
+        player->just_arrived = true;
         finish_crate_slide(player);
         player->x = player->path.end_x;
         player->y = player->path.end_y;
@@ -396,7 +427,10 @@ void player_update(Player *player, Level *level, float camera_yaw, bool can_move
         update_animation(player, dt);
         return;
     }
-    if (can_move && !player->moving && !player->crate_moving) {
+    if (player->bump_lock > 0.0f) {
+        player->bump_lock -= dt;
+    }
+    if (can_move && !player->moving && !player->crate_moving && player->bump_lock <= 0.0f) {
         try_start_move(player, level, camera_yaw);
         if (!player->moving) {
             player->was_pushing = false;
@@ -413,7 +447,10 @@ void player_update(Player *player, Level *level, float camera_yaw, bool can_move
     } else if (player->cranking) {
         player_set_anim(player, ANIM_CRANK);
         sync_crank_frame(player);
+    } else if (player->bumping && !bump_finished(player)) {
+        player_set_anim(player, player->bump_anim);
     } else {
+        player->bumping = false;
         player_set_anim(player, ANIM_IDLE);
         if (player->crate_moving) {
             update_crate_fall(player, dt);

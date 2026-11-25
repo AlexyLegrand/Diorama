@@ -210,6 +210,7 @@ static void test_world_2_level_3(void)
     Level level;
     assert(level_load(&level, "levels/world_2/level_3.txt"));
     assert(level.width == 12 && level.height == 10 && level.depth == 12);
+    assert(level.collectible_count == 5);
     Pos pos = walk(&level, start_of(&level), "EEEEEEEEEESSSSSSSSSSS");
     assert(pos.x == 10 && pos.y == 1 && pos.z == 11);
     pos = walk(&level, pos, "E");
@@ -315,6 +316,24 @@ static void test_translations_are_complete(void)
     settings_toggle_language();
 }
 
+static void test_progress_counters(void)
+{
+    Progress progress;
+
+    progress_reset(&progress);
+    assert(progress.seeds == 0 && progress.collectibles == 0 && progress_is_new(&progress));
+    progress_complete_level(&progress, 0, 0);
+    progress_complete_level(&progress, 0, 0);
+    progress_complete_level(&progress, 1, 2);
+    assert(progress.seeds == 2);
+    progress_collect(&progress, 0, 1, 3);
+    progress_collect(&progress, 0, 1, 3);
+    progress_collect(&progress, 0, 1, 0);
+    assert(progress.collectibles == 2);
+    assert(progress_has_collectible(&progress, 0, 1, 3) && !progress_has_collectible(&progress, 0, 1, 2));
+    assert(!progress_is_new(&progress));
+}
+
 static void test_key_rebind_swaps_conflict(void)
 {
     settings_reset_keys();
@@ -342,6 +361,7 @@ int main(void)
     test_worlds_are_complete();
     test_level_size_limits();
     test_translations_are_complete();
+    test_progress_counters();
     test_key_rebind_swaps_conflict();
     printf("movement tests OK\n");
     return 0;

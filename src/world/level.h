@@ -9,6 +9,7 @@
 #define LEVEL_MAX_DEPTH  12
 #define LEVEL_MAX_ENTRANCES 9
 #define LEVEL_MAX_DECOR 256
+#define LEVEL_MAX_COLLECTIBLES 32
 
 typedef enum {
     VEG_TREE_ROUND,
@@ -47,6 +48,8 @@ typedef struct {
     bool has_portal_prev;
     GridPos portal_next;
     GridPos portal_prev;
+    int collectible_count;
+    GridPos collectibles[LEVEL_MAX_COLLECTIBLES];
     int decor_count;
     Decor decor[LEVEL_MAX_DECOR];
     Cell cells[LEVEL_MAX_HEIGHT][LEVEL_MAX_WIDTH][LEVEL_MAX_DEPTH];

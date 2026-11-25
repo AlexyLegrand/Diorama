@@ -18,6 +18,8 @@ SRC     = $(SRC_DIR)/main.c \
           $(SRC_DIR)/render/backdrop.c \
           $(SRC_DIR)/render/title_logo.c \
           $(SRC_DIR)/render/rocket.c \
+          $(SRC_DIR)/render/collectible.c \
+          $(SRC_DIR)/render/crystal_hue.c \
           $(SRC_DIR)/entities/player.c \
           $(SRC_DIR)/entities/crank.c \
           $(SRC_DIR)/ui/ui.c \
@@ -56,7 +58,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-TEST_SRC = tests/test_movement.c $(SRC_DIR)/game/world.c $(SRC_DIR)/core/i18n.c $(SRC_DIR)/core/settings.c $(SRC_DIR)/world/level.c $(SRC_DIR)/world/movement.c $(SRC_DIR)/world/platform.c \
+TEST_SRC = tests/test_movement.c $(SRC_DIR)/game/world.c $(SRC_DIR)/core/progress.c $(SRC_DIR)/core/i18n.c $(SRC_DIR)/core/settings.c $(SRC_DIR)/world/level.c $(SRC_DIR)/world/movement.c $(SRC_DIR)/world/platform.c \
            $(SRC_DIR)/world/blocktype.c $(SRC_DIR)/render/block_render.c $(SRC_DIR)/render/lighting.c
 
 test:

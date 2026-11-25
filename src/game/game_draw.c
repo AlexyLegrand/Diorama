@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stddef.h>
 #include "raylib.h"
 #include "game/game.h"
@@ -9,6 +10,7 @@
 #include "render/sky.h"
 #include "render/title_logo.h"
 #include "render/rocket.h"
+#include "render/collectible.h"
 #include "entities/player.h"
 #include "ui/ui.h"
 #include "core/i18n.h"
@@ -18,6 +20,7 @@ static const int FPS_MARGIN = 20;
 static const int FPS_WIDTH = 100;
 static const float PAUSE_SHADE = 0.45f;
 static const float ROCKET_FLOOR_OFFSET = 0.5f;
+static const float COLLECTIBLE_PHASE = 0.7f;
 static const int LOADING_FONT_SIZE = 30;
 static const int LOADING_MARGIN = 40;
 static const float LOADING_TEXT_MIN_FADE = 0.6f;
@@ -40,6 +43,25 @@ static void draw_world(const Level *level, const Player *player, const CrankAnim
     }
     if (show_player) {
         player_draw(player);
+    }
+}
+
+static void draw_collectibles(const Game *g)
+{
+    double now = GetTime();
+
+    for (int i = 0; i < g->level.collectible_count; i++) {
+        GridPos cell = g->level.collectibles[i];
+        Vector3 position = { (float)cell.x, (float)cell.y, (float)cell.z };
+        if (game_collectible_taken(g, i)) {
+            float elapsed = (float)(now - g->collect_times[i]);
+            if (elapsed < collectible_collect_duration()) {
+                collectible_draw(position, 0.0f, elapsed, false);
+            }
+            continue;
+        }
+        bool owned = progress_has_collectible(&g->progress, g->world, g->level_index, i);
+        collectible_draw(position, (float)now + i * COLLECTIBLE_PHASE, -1.0f, owned);
     }
 }
 
@@ -75,6 +97,7 @@ static void draw_scene(Game *g, bool in_menu, Camera3D camera)
         }
     } else {
         draw_world(&g->level, &g->player, &g->crank, !g->launch_done);
+        draw_collectibles(g);
     }
     if (!in_menu && scene == STATE_MAP) {
         ui_draw_entrances(&g->level, game_completed(g));
@@ -117,8 +140,15 @@ static void draw_overlay(const Game *g, Camera3D camera)
     if (!in_title && scene == STATE_MAP) {
         ui_draw_map_hud(camera, &g->level, game_completed(g), g->entrance,
                         world_name(&g->worlds[g->world]), portal_prompt(g));
+        ui_draw_map_counters(g->progress.seeds, g->progress.collectibles);
     } else if (!in_title) {
+        bool owned[LEVEL_MAX_COLLECTIBLES];
+        for (int i = 0; i < g->level.collectible_count; i++) {
+            owned[i] = progress_has_collectible(&g->progress, g->world, g->level_index, i);
+        }
         hud_draw(world_name(&g->worlds[g->world]), g->level_index);
+        ui_draw_lives(g->lives);
+        ui_draw_collectible_slots(g->level.collectible_count, owned);
     }
     if (!in_title && scene != g->state) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, PAUSE_SHADE));

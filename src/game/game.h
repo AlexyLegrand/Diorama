@@ -64,6 +64,9 @@ typedef struct {
     GridPos launch_pad;
     int launch_target;
     bool launch_done;
+    unsigned int level_collected;
+    double collect_times[LEVEL_MAX_COLLECTIBLES];
+    int lives;
     TransitionPhase transition;
     float transition_time;
     GameState next_state;
@@ -86,6 +89,12 @@ const bool *game_completed(const Game *g);
 bool game_world_done(const Game *g);
 
 bool game_in_title_scene(const Game *g);
+
+float game_world_hue(const Game *g);
+
+bool game_collectible_taken(const Game *g, int index);
+
+void game_lose_life(Game *g);
 
 bool game_rocket_next(const Game *g);
 

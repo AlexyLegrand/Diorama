@@ -165,3 +165,51 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - Les thèmes des mondes se limitent au ciel : pas encore de blocs ni de végétation propres à chaque monde.
 - La souris ne sert que dans les menus et pour le zoom : pas de clic sur la carte, ni de caméra à la souris.
 - Pas d'annulation de coup : seul « recommencer le niveau » existe.
+
+## Plan de développement
+
+Les prochaines étapes, dans l'ordre :
+
+1. **Collectibles**
+   - Un collectible que l'on peut placer plusieurs fois dans un niveau.
+   - Le même modèle pour tous les mondes, avec une couleur différente selon le monde.
+   - **Utilité retenue : personnaliser Sprout.** Les collectibles débloqueront des accessoires
+     (chapeau, écharpe de couleur…). Les graines dorées serviront plus tard au lore du jeu : faire
+     repousser le grand arbre (écran titre et scène de fin).
+   - **Fait** :
+     - placement dans les niveaux avec le caractère `o` (jusqu'à 32 par niveau), récolte en passant dessus ;
+     - la sauvegarde retient chaque collectible récolté, compte les graines (`seeds`, une par niveau
+       terminé) et les collectibles (`collectibles`) ; un collectible ne compte qu'une fois ;
+     - comme dans *Captain Toad*, un collectible déjà récolté lors d'une partie précédente reste visible
+       en transparent ;
+     - HUD : dans un niveau, « ● récoltés / total » dans la couleur du monde ; sur la carte, le total
+       de graines dorées et de collectibles.
+   - **Provisoire** : le collectible est une sphère de la couleur du monde, en attendant le modèle Blender ;
+     le son `assets/music/world/collectible.mp3` est prévu mais pas encore créé (récolte silencieuse).
+   - Reste à faire : le modèle, le son, et l'utilisation des compteurs (personnalisation de Sprout, arbre).
+   - **Le collectible est le lotus de cristal** (`assets/collectibles/crystal_lotus.glb`), animé (Idle en
+     boucle, Collect au ramassage). Ses parties en cristal prennent la teinte du monde (vert, bleu, orange,
+     violet, jaune, turquoise) ; le pollen et les feuilles gardent leurs couleurs. Un lotus déjà récupéré
+     lors d'une partie précédente reste visible en transparent.
+   - **HUD (inspiré de *Captain Toad*, d'après `assets/hud/hud_mockup.png`)** :
+     - **dans un niveau**, en haut à gauche : portrait animé de Sprout (planches `sprout_portrait_idle_sheet.png`
+       et `sprout_portrait_happy_sheet.png`, l'animation joyeuse se joue au ramassage d'un lotus et à la
+       victoire) avec « ×3 » vies en doré ; en dessous, une icône par lotus du niveau, en silhouette
+       (`crystal_lotus_icon_empty.png`) tant qu'il n'est pas récupéré, en cristal (`crystal_lotus_icon.png`,
+       recolorée selon le monde) une fois récupéré. Le titre du niveau est en haut au centre ;
+     - **sur la carte du monde**, sous le nom du monde : le total de graines dorées et de lotus.
+   - Sur la carte, la graine dorée utilise l'icône `assets/hud/golden_seed_icon.png`.
+   - Reste à faire : le son de ramassage (`assets/music/world/collectible.mp3`) et l'utilisation des compteurs.
+   - **Vies** : 3 vies à chaque entrée dans un niveau ; `game_lose_life()` en retire une, et à 0 le
+     niveau recommence (pas de *game over*). Rien ne fait encore perdre de vie : les ennemis arriveront
+     dans les prochains mondes.
+2. **Distribution**
+   - Builds Windows et Linux prêts à télécharger.
+   - Page itch.io.
+3. **Manette**
+   - Jouer et naviguer dans les menus à la manette.
+4. **Monde 2**
+   - Commencer le contenu du monde 2 : thème, mécanique et niveaux.
+
+Reporté à plus tard : écran de crédits (le jeu n'est pas encore partagé), noms des niveaux,
+sons non utilisés (`push.mp3`, `seed_idle.mp3`, `bird.mp3`).

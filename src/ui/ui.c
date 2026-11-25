@@ -5,6 +5,7 @@
 #include "core/settings.h"
 #include "core/sfx.h"
 #include "core/i18n.h"
+#include "render/crystal_hue.h"
 
 static const int UI_REFERENCE_WIDTH = 1280;
 static const int UI_REFERENCE_HEIGHT = 720;
@@ -41,6 +42,23 @@ static const int PROMPT_SIZE = 28;
 static const int PROMPT_BOTTOM = 90;
 static const int BOTTOM_MENU_MARGIN = 60;
 static const int MENU_GAP = 20;
+static const int COUNTER_GAP = 10;
+static const char *PORTRAIT_PATH = "assets/hud/sprout_portrait.png";
+static const char *PORTRAIT_IDLE_PATH = "assets/hud/sprout_portrait_idle_sheet.png";
+static const char *PORTRAIT_HAPPY_PATH = "assets/hud/sprout_portrait_happy_sheet.png";
+static const char *ICON_FULL_PATH = "assets/hud/crystal_lotus_icon.png";
+static const char *ICON_EMPTY_PATH = "assets/hud/crystal_lotus_icon_empty.png";
+static const char *SEED_ICON_PATH = "assets/hud/golden_seed_icon.png";
+static const float PORTRAIT_FPS = 12.5f;
+static const int PORTRAIT_SIZE = 100;
+static const int HUD_NUMBER_SIZE = 40;
+static const int HUD_NUMBER_OUTLINE = 3;
+static const int ICON_SIZE = 50;
+static const int ICON_GAP = 4;
+static const int MAP_ICON_SIZE = 40;
+static const int SEED_ICON_RADIUS = 14;
+static const Color HUD_NUMBER_COLOR = { 255, 206, 60, 255 };
+static const Color HUD_OUTLINE_COLOR = { 70, 40, 10, 255 };
 static const int BOTTOM_ITEM_SIZE = 30;
 static const int BOTTOM_CELL_WIDTH = 260;
 
@@ -65,6 +83,81 @@ static const int FONT_EXTRA_CODEPOINTS[] = { 0x152, 0x153, 0x2019, 0x2026 };
 #define FONT_LATIN1_LAST 255
 
 static Font font;
+static Texture2D portrait;
+static Texture2D portrait_idle;
+static Texture2D portrait_happy;
+static Texture2D icon_full;
+static Texture2D icon_empty;
+static Texture2D seed_icon;
+static Image icon_source;
+static double cheer_start = -1000.0;
+
+static Texture2D load_hud_texture(const char *path)
+{
+    Texture2D texture = FileExists(path) ? LoadTexture(path) : (Texture2D){0};
+
+    if (IsTextureValid(texture)) {
+        SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+    }
+    return texture;
+}
+
+static void unload_hud_texture(Texture2D *texture)
+{
+    if (IsTextureValid(*texture)) {
+        UnloadTexture(*texture);
+    }
+    *texture = (Texture2D){0};
+}
+
+void ui_load_hud(void)
+{
+    portrait = load_hud_texture(PORTRAIT_PATH);
+    portrait_idle = load_hud_texture(PORTRAIT_IDLE_PATH);
+    portrait_happy = load_hud_texture(PORTRAIT_HAPPY_PATH);
+    icon_empty = load_hud_texture(ICON_EMPTY_PATH);
+    seed_icon = load_hud_texture(SEED_ICON_PATH);
+    icon_source = FileExists(ICON_FULL_PATH) ? LoadImage(ICON_FULL_PATH) : (Image){0};
+    if (IsImageValid(icon_source)) {
+        ImageFormat(&icon_source, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    }
+}
+
+void ui_unload_hud(void)
+{
+    unload_hud_texture(&portrait);
+    unload_hud_texture(&portrait_idle);
+    unload_hud_texture(&portrait_happy);
+    unload_hud_texture(&icon_full);
+    unload_hud_texture(&icon_empty);
+    unload_hud_texture(&seed_icon);
+    if (IsImageValid(icon_source)) {
+        UnloadImage(icon_source);
+    }
+}
+
+void ui_set_collectible_hue(float hue)
+{
+    if (!IsImageValid(icon_source)) {
+        return;
+    }
+    Image tinted = ImageCopy(icon_source);
+    Color *pixels = (Color *)tinted.data;
+    for (int i = 0; i < tinted.width * tinted.height; i++) {
+        if (pixels[i].a > 0 && crystal_hue_matches(pixels[i])) {
+            pixels[i] = crystal_hue_shift(pixels[i], hue);
+        }
+    }
+    unload_hud_texture(&icon_full);
+    icon_full = LoadTextureFromImage(tinted);
+    SetTextureFilter(icon_full, TEXTURE_FILTER_BILINEAR);
+    UnloadImage(tinted);
+}
+
+void ui_portrait_cheer(void)
+{
+    cheer_start = GetTime();
+}
 
 float ui_scale(void)
 {
@@ -392,7 +485,114 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
 void hud_draw(const char *world_name, int level_index)
 {
     const char *hint = TextFormat(tr(TXT_HUD_HINT), settings_key_name(settings_key(ACTION_RESTART)));
+    const char *title = TextFormat(tr(TXT_HUD_TITLE), world_name, level_index + 1);
+    int size = ui_px(HUD_TITLE_SIZE);
+    int pad = ui_px(HUD_PADDING);
+    int width = ui_measure(title, size) + 2 * pad;
 
-    draw_title_panel(TextFormat(tr(TXT_HUD_TITLE), world_name, level_index + 1));
-    draw_text_shadowed(hint, ui_px(HUD_MARGIN), GetScreenHeight() - ui_px(HUD_MARGIN) - ui_px(HINT_SIZE), ui_px(HINT_SIZE), HINT_COLOR);
+    draw_panel(GetScreenWidth() / 2 - width / 2, ui_px(HUD_MARGIN), width, size + 2 * pad);
+    ui_text(title, GetScreenWidth() / 2 - width / 2 + pad, ui_px(HUD_MARGIN) + pad, size, WHITE);
+    draw_text_shadowed(hint, ui_px(HUD_MARGIN), GetScreenHeight() - ui_px(HUD_MARGIN) - ui_px(HINT_SIZE),
+                       ui_px(HINT_SIZE), HINT_COLOR);
+}
+
+static void draw_texture_at(Texture2D texture, Rectangle source, int x, int y, int size, Color tint)
+{
+    Rectangle dest = { (float)x, (float)y, (float)size, (float)size };
+
+    DrawTexturePro(texture, source, dest, (Vector2){ 0.0f, 0.0f }, 0.0f, tint);
+}
+
+static void draw_hud_number(const char *text, int x, int y, int size)
+{
+    int outline = ui_px(HUD_NUMBER_OUTLINE);
+
+    for (int dx = -outline; dx <= outline; dx += outline) {
+        for (int dy = -outline; dy <= outline; dy += outline) {
+            ui_text(text, x + dx, y + dy, size, HUD_OUTLINE_COLOR);
+        }
+    }
+    ui_text(text, x, y, size, HUD_NUMBER_COLOR);
+}
+
+static void draw_portrait(int x, int y, int size)
+{
+    double since_cheer = GetTime() - cheer_start;
+    bool happy = IsTextureValid(portrait_happy)
+                 && since_cheer * PORTRAIT_FPS < portrait_happy.width / (float)portrait_happy.height;
+    Texture2D sheet = happy ? portrait_happy : portrait_idle;
+    double time = happy ? since_cheer : GetTime();
+
+    if (!IsTextureValid(sheet)) {
+        if (IsTextureValid(portrait)) {
+            Rectangle full = { 0.0f, 0.0f, (float)portrait.width, (float)portrait.height };
+            draw_texture_at(portrait, full, x, y, size, WHITE);
+        }
+        return;
+    }
+    int frames = sheet.width / sheet.height;
+    int frame = (int)(time * PORTRAIT_FPS) % frames;
+    Rectangle source = { (float)(frame * sheet.height), 0.0f, (float)sheet.height, (float)sheet.height };
+    draw_texture_at(sheet, source, x, y, size, WHITE);
+}
+
+static int portrait_bottom(void)
+{
+    return ui_px(HUD_MARGIN) + ui_px(PORTRAIT_SIZE);
+}
+
+void ui_draw_lives(int lives)
+{
+    int size = ui_px(PORTRAIT_SIZE);
+    int x = ui_px(HUD_MARGIN);
+    int y = ui_px(HUD_MARGIN);
+    int number = ui_px(HUD_NUMBER_SIZE);
+
+    draw_portrait(x, y, size);
+    draw_hud_number(TextFormat("×%d", lives), x + size + ui_px(HUD_PADDING), y + (size - number) / 2, number);
+}
+
+static void draw_icon(bool full, int x, int y, int size)
+{
+    Texture2D texture = full ? icon_full : icon_empty;
+
+    if (IsTextureValid(texture)) {
+        Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+        draw_texture_at(texture, source, x, y, size, WHITE);
+        return;
+    }
+    Vector2 center = { x + size / 2.0f, y + size / 2.0f };
+    DrawCircleV(center, size / 3.0f, full ? SKYBLUE : Fade(WHITE, 0.4f));
+}
+
+void ui_draw_collectible_slots(int count, const bool owned[])
+{
+    int size = ui_px(ICON_SIZE);
+    int x = ui_px(HUD_MARGIN);
+    int y = portrait_bottom() + ui_px(ICON_GAP);
+
+    for (int i = 0; i < count; i++) {
+        draw_icon(owned[i], x + i * (size + ui_px(ICON_GAP)), y, size);
+    }
+}
+
+void ui_draw_map_counters(int seeds, int collectibles)
+{
+    int size = ui_px(MAP_ICON_SIZE);
+    int number = ui_px(HUD_NUMBER_SIZE) * 3 / 4;
+    int pad = ui_px(HUD_PADDING);
+    int x = ui_px(HUD_MARGIN);
+    int y = ui_px(HUD_MARGIN) + ui_px(HUD_TITLE_SIZE) + 2 * pad + ui_px(COUNTER_GAP);
+    if (IsTextureValid(seed_icon)) {
+        Rectangle source = { 0.0f, 0.0f, (float)seed_icon.width, (float)seed_icon.height };
+        draw_texture_at(seed_icon, source, x, y, size, WHITE);
+    } else {
+        Vector2 seed = { x + size / 2.0f, y + size / 2.0f };
+        DrawCircleV(seed, (float)ui_px(SEED_ICON_RADIUS) + 2.0f, HUD_OUTLINE_COLOR);
+        DrawCircleV(seed, (float)ui_px(SEED_ICON_RADIUS), GOLD);
+    }
+    draw_hud_number(TextFormat("×%d", seeds), x + size + pad, y + (size - number) / 2, number);
+    y += size + ui_px(COUNTER_GAP);
+    draw_icon(true, x, y, size);
+    draw_hud_number(TextFormat("×%d", collectibles), x + size + pad, y + (size - number) / 2, number);
 }

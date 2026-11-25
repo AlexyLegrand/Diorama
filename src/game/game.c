@@ -11,6 +11,7 @@
 #include "render/vegetation.h"
 #include "render/title_logo.h"
 #include "render/rocket.h"
+#include "render/collectible.h"
 #include "core/sfx.h"
 #include "ui/ui.h"
 #include "ui/settings_menu.h"
@@ -24,6 +25,7 @@ static const char *WORLD_MUSIC_PATH = "assets/music/world/diorama_ambiance_versi
 static const char *WIND_PATH = "assets/music/world/ambience_wind.mp3";
 static const float WIND_VOLUME = 0.4f;
 static const float ROCKET_BOARD_DISTANCE = 0.7f;
+static const int LIVES_START = 3;
 static const double ENTRANCE_SOUND_COOLDOWN = 0.5;
 static const float FADE_OUT_DURATION = 1.0f;
 static const float FADE_HOLD_DURATION = 0.4f;
@@ -57,7 +59,12 @@ static bool start_world_level(Game *g, int level)
     char path[WORLD_PATH_MAX];
 
     world_level_path(&g->worlds[g->world], level, path, sizeof(path));
-    return start_level(path, &g->level, &g->player, &g->orbit, &g->crank);
+    if (!start_level(path, &g->level, &g->player, &g->orbit, &g->crank)) {
+        return false;
+    }
+    g->level_collected = 0u;
+    g->lives = LIVES_START;
+    return true;
 }
 
 static void place_rockets(Game *g)
@@ -163,6 +170,28 @@ static bool load_backdrop(Backdrop *backdrop, const char *level_path)
     return backdrop_load(backdrop, path);
 }
 
+static void collect_under_player(Game *g)
+{
+    if (g->state != STATE_PLAYING || !player_is_idle(&g->player)) {
+        return;
+    }
+    for (int i = 0; i < g->level.collectible_count; i++) {
+        GridPos c = g->level.collectibles[i];
+        bool here = c.x == g->player.x && c.y == g->player.y && c.z == g->player.z;
+        if (!here || (g->level_collected >> i) & 1u) {
+            continue;
+        }
+        g->level_collected |= 1u << i;
+        g->collect_times[i] = GetTime();
+        sfx_play(SFX_COLLECTIBLE);
+        ui_portrait_cheer();
+        if (!progress_has_collectible(&g->progress, g->world, g->level_index, i)) {
+            progress_collect(&g->progress, g->world, g->level_index, i);
+            progress_save(&g->progress);
+        }
+    }
+}
+
 static void update_world(Game *g)
 {
     if (g->state != STATE_WON) {
@@ -191,7 +220,9 @@ static void update_world(Game *g)
         block_render_reward_collect();
         sfx_play(SFX_VICTORY);
         sfx_play(SFX_SEED_COLLECT);
+        ui_portrait_cheer();
     }
+    collect_under_player(g);
     if (g->state == STATE_WON && block_render_reward_collected()) {
         g->level.cells[g->player.y][g->player.x][g->player.z].type = BLOCK_EMPTY;
     }
@@ -201,7 +232,9 @@ static void unload_assets(void)
 {
     title_logo_unload();
     ui_unload_font();
+    ui_unload_hud();
     rocket_unload();
+    collectible_unload();
     sfx_unload();
     backdrop_assets_unload();
     vegetation_unload();
@@ -242,6 +275,8 @@ bool load_world(Game *g, int index)
     }
     g->level_count = g->level.entrance_count;
     place_rockets(g);
+    collectible_set_hue(game_world_hue(g));
+    ui_set_collectible_hue(game_world_hue(g));
     load_world_scenery(g);
     g->progress.world = index;
     progress_save(&g->progress);
@@ -266,7 +301,9 @@ bool game_init(Game *g)
     block_render_load();
     title_logo_load();
     ui_load_font();
+    ui_load_hud();
     rocket_load();
+    collectible_load();
     sfx_load();
     vegetation_load();
     backdrop_assets_load();
@@ -479,7 +516,7 @@ static void update_level(Game *g, bool back, bool confirm)
 {
     update_world(g);
     if (g->state == STATE_WON && !g->progress.completed[g->world][g->level_index]) {
-        g->progress.completed[g->world][g->level_index] = true;
+        progress_complete_level(&g->progress, g->world, g->level_index);
         progress_save(&g->progress);
         if (game_world_done(g) && g->world + 1 < g->world_count) {
             sfx_play(SFX_UI_UNLOCK);
@@ -510,6 +547,27 @@ bool game_rocket_next(const Game *g)
 bool game_rocket_prev(const Game *g)
 {
     return g->level.has_portal_prev && g->world > 0;
+}
+
+float game_world_hue(const Game *g)
+{
+    static const float WORLD_HUES[] = { 115.0f, 190.0f, 20.0f, 280.0f, 48.0f, 165.0f };
+    int count = (int)(sizeof(WORLD_HUES) / sizeof(WORLD_HUES[0]));
+
+    return WORLD_HUES[g->world % count];
+}
+
+bool game_collectible_taken(const Game *g, int index)
+{
+    return (g->level_collected >> index) & 1u;
+}
+
+void game_lose_life(Game *g)
+{
+    g->lives--;
+    if (g->lives <= 0) {
+        restart_level(g);
+    }
 }
 
 bool game_in_title_scene(const Game *g)

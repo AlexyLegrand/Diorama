@@ -104,6 +104,7 @@ from bottom to top. Each layer is a grid of characters (max 12 wide × 10 high �
 | `1`–`9` | level entrance (world map) | | |
 | `+` | portal to the next world (world map) | | |
 | `-` | portal to the previous world (world map) | | |
+| `o` | collectible (up to 32 per level) | | |
 
 The `.sky` file with the same name places the decor: one object per line,
 `kind x y z scale yaw` (position relative to the level center), `#` for comments.

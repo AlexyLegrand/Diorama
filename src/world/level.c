@@ -1,4 +1,6 @@
 #include "world/level.h"
+
+#define COLLECTIBLE_CHAR 'o'
 #include "render/block_render.h"
 #include <string.h>
 
@@ -36,7 +38,7 @@ static bool char_to_cell(char c, Cell *cell)
         *cell = (Cell){ VEGETATION_CHARS[veg].cell, DIR_NORTH };
         return true;
     }
-    if ((c >= '1' && c <= '9') || c == '+' || c == '-') {
+    if ((c >= '1' && c <= '9') || c == '+' || c == '-' || c == COLLECTIBLE_CHAR) {
         *cell = (Cell){ BLOCK_EMPTY, DIR_NORTH };
         return true;
     }
@@ -97,6 +99,12 @@ static bool parse_row(Level *level, const char *row, int length, int y, int z, b
                 return false;
             }
             level->decor[level->decor_count++] = (Decor){ VEGETATION_CHARS[veg].kind, { x, y, z } };
+        }
+        if (row[x] == COLLECTIBLE_CHAR) {
+            if (level->collectible_count >= LEVEL_MAX_COLLECTIBLES) {
+                return false;
+            }
+            level->collectibles[level->collectible_count++] = (GridPos){ x, y, z };
         }
         if (row[x] == '+') {
             level->portal_next = (GridPos){ x, y, z };

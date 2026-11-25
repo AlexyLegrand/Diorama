@@ -28,6 +28,7 @@ static const char *SFX_PATHS[SFX_COUNT] = {
     [SFX_UI_RESTART]    = "assets/music/ui/restart.mp3",
     [SFX_UI_UNLOCK]     = "assets/music/ui/unlock.mp3",
     [SFX_ROCKET_LAUNCH] = "assets/music/world/rocket_launch.mp3",
+    [SFX_COLLECTIBLE]   = "assets/music/world/collectible.mp3",
 };
 
 static const char *LOOP_PATHS[SFX_LOOP_COUNT] = {

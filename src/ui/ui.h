@@ -13,6 +13,20 @@ void ui_load_font(void);
 
 void ui_unload_font(void);
 
+void ui_load_hud(void);
+
+void ui_unload_hud(void);
+
+void ui_draw_lives(int lives);
+
+void ui_draw_collectible_slots(int count, const bool owned[]);
+
+void ui_draw_map_counters(int seeds, int collectibles);
+
+void ui_set_collectible_hue(float hue);
+
+void ui_portrait_cheer(void);
+
 void ui_text(const char *text, int x, int y, int size, Color color);
 
 int ui_measure(const char *text, int size);
@@ -46,5 +60,6 @@ void ui_draw_map_hud(Camera3D camera, const Level *map, const bool completed[], 
                      const char *world_name, const char *portal_prompt);
 
 void hud_draw(const char *world_name, int level_index);
+
 
 #endif

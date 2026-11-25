@@ -15,6 +15,8 @@ typedef enum {
     ANIM_PUSH,
     ANIM_CRANK,
     ANIM_ROCKET_LAUNCH,
+    ANIM_BUMP,
+    ANIM_BUMP_HARD,
     ANIM_COUNT
 } PlayerAnim;
 
@@ -49,6 +51,10 @@ typedef struct {
     bool cranking;
     float crank_progress;
     float climb_sound_timer;
+    bool bumping;
+    PlayerAnim bump_anim;
+    float bump_lock;
+    bool just_arrived;
 } Player;
 
 Player player_load(int x, int y, int z, Direction dir);
