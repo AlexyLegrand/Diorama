@@ -172,6 +172,33 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - La souris ne sert que dans les menus et pour le zoom : pas de clic sur la carte, ni de caméra à la souris.
 - Pas d'annulation de coup : seul « recommencer le niveau » existe.
 
+## Objectif actuel : le monde 1 au niveau d'un jeu professionnel
+
+On reste sur **raylib**. Plutôt que de produire beaucoup de mondes moyens, on amène **le monde 1** au
+niveau d'un jeu professionnel (« tranche verticale »), qui servira de référence pour tous les autres.
+Tant que ces points ne sont pas résolus, on n'avance pas sur le reste du plan.
+
+**Préalable : les outils pour travailler efficacement** (voir `tools/README.md`)
+1. Piloter le jeu : lancer, envoyer des touches, capturer des images, pour tester et régler la fluidité.
+2. Piloter Blender : export `.glb` propre et automatisé depuis les `.blend`.
+3. Assets libres (CC0) : sources et suivi des licences (`assets/CREDITS.md`).
+4. Références : dossier `docs/references/` (captures et notes de *Captain Toad*, conférences, analyses).
+
+**Tranche verticale du monde 1**
+- **Rendu** : occlusion ambiante pré-calculée par sommet sur les blocs, vraies ombres du soleil, bloom léger,
+  lumière de contour sur Sprout et les objets, ciel de coucher de soleil plus riche.
+- **Art** (Blender) : textures sur les blocs (terre, pierre, herbe stylisée), herbe qui déborde des bords,
+  petits détails de décor.
+- **Polish** : UI animée (compteurs qui rebondissent, transitions de menus), sons superposés et ambiance par
+  monde, caméra soignée.
+- **Level design** : éditeur de niveaux dans le jeu, niveaux du monde 1 retravaillés (plusieurs étages,
+  secrets, lotus cachés).
+
+**Idées gardées pour plus tard**
+- Passer à Godot : écarté pour l'instant, à reconsidérer seulement si le rendu sous raylib bloque.
+- Personnalisation de Sprout avec les lotus, arbre du lore avec les graines, ennemis et vies dans les
+  prochains mondes, manette, builds et page itch.io, crédits, noms des niveaux.
+
 ## Plan de développement
 
 Les prochaines étapes, dans l'ordre :

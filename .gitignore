@@ -12,3 +12,13 @@
 # Blender backups
 *.blend1
 *.blend2
+
+# Tool output
+/tools/out/
+/tools/.deps/
+
+# Reference images from other games (copyrighted, kept local)
+/docs/references/*.png
+/docs/references/*.jpg
+/docs/references/*.gif
+/docs/references/*.mp4

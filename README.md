@@ -71,6 +71,8 @@ levels/       worlds.txt, title scene, one folder per world (map + levels, .txt 
 assets/       .glb models and Blender sources, music and sound effects (assets/music/),
               logo, rocket, font (assets/fonts/)
 tests/        unit tests and test levels
+tools/        game driving, Blender export and model inspection (see tools/README.md)
+docs/         references (screenshots and notes from other games)
 ```
 
 ## Languages
