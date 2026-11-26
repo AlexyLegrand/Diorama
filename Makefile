@@ -20,6 +20,8 @@ SRC     = $(SRC_DIR)/main.c \
           $(SRC_DIR)/render/rocket.c \
           $(SRC_DIR)/render/collectible.c \
           $(SRC_DIR)/render/crystal_hue.c \
+          $(SRC_DIR)/render/dust.c \
+          $(SRC_DIR)/render/postfx.c \
           $(SRC_DIR)/entities/player.c \
           $(SRC_DIR)/entities/crank.c \
           $(SRC_DIR)/ui/ui.c \

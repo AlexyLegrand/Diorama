@@ -3,6 +3,7 @@
 #include "render/lighting.h"
 #include "raymath.h"
 #include "core/sfx.h"
+#include "render/dust.h"
 #include <string.h>
 #include <math.h>
 
@@ -18,6 +19,15 @@
 #define PUSH_LEAN         0.2f
 #define LEAN_SPEED        10.0f
 #define CRANK_LEAN        (1.0f - PLAYER_SCALE)
+#define TURN_SPEED        18.0f
+#define WALK_START_FACTOR 0.45f
+#define WALK_ACCEL_TIME   0.18f
+#define EASE_OUT_ZONE     0.45f
+#define EASE_OUT_MIN      0.35f
+#define SQUASH_LAND       0.12f
+#define SQUASH_RECOVER    9.0f
+#define DUST_STEP_PUFFS   3
+#define DUST_LAND_PUFFS   7
 
 static const char *ANIM_NAMES[ANIM_COUNT] = {
     [ANIM_IDLE]    = "Idle",
@@ -88,6 +98,9 @@ void player_place(Player *player, int x, int y, int z)
     player->bumping = false;
     player->bump_lock = 0.0f;
     player->just_arrived = false;
+    player->facing_angle = player_model_angle(player->dir);
+    player->squash = 0.0f;
+    player->speed_factor = 1.0f;
 }
 
 void player_set_crank(Player *player, bool active, float progress)
@@ -214,6 +227,27 @@ static bool bump_finished(const Player *player)
     return index == -1 || player->frame >= player->anims[index].keyframeCount - 2;
 }
 
+static Vector3 feet_position(const Player *player)
+{
+    Vector3 feet = player->position;
+
+    feet.y -= 0.5f;
+    return feet;
+}
+
+static float ease_out_factor(const Player *player, float remaining)
+{
+    int input_x;
+    int input_y;
+    bool last_segment = player->path_index == player->path.count - 1;
+
+    read_input(&input_x, &input_y);
+    if (!last_segment || input_x != 0 || input_y != 0 || remaining >= EASE_OUT_ZONE) {
+        return 1.0f;
+    }
+    return EASE_OUT_MIN + (1.0f - EASE_OUT_MIN) * (remaining / EASE_OUT_ZONE);
+}
+
 static void try_start_move(Player *player, Level *level, float camera_yaw)
 {
     int input_x;
@@ -255,6 +289,12 @@ static void try_start_move(Player *player, Level *level, float camera_yaw)
         sfx_play(SFX_STEP);
     }
     player->climb_sound_timer = 0.0f;
+    if (!walked_into) {
+        player->speed_factor = WALK_START_FACTOR;
+        if (!player->path.push) {
+            dust_spawn(feet_position(player), DUST_STEP_PUFFS);
+        }
+    }
     player->moving = true;
     player->bumping = false;
     player->path_index = 0;
@@ -327,6 +367,10 @@ static void advance_move(Player *player, float dt)
         anim = ANIM_PUSH;
     }
     player_set_anim(player, anim);
+    if (!target.climbing && !player->path.push) {
+        player->speed_factor = fminf(1.0f, player->speed_factor + dt / WALK_ACCEL_TIME);
+        speed *= player->speed_factor * ease_out_factor(player, (1.0f - player->segment_progress) * length);
+    }
     if (length > 0.0f) {
         player->segment_progress += speed * dt / length;
     } else {
@@ -356,9 +400,14 @@ static void advance_move(Player *player, float dt)
         player->was_pushing = player->path.push;
         player->just_arrived = true;
         finish_crate_slide(player);
+        bool changed_floor = player->path.end_y != player->y;
         player->x = player->path.end_x;
         player->y = player->path.end_y;
         player->z = player->path.end_z;
+        if (changed_floor) {
+            player->squash = SQUASH_LAND;
+            dust_spawn(feet_position(player), DUST_LAND_PUFFS);
+        }
     }
 }
 
@@ -418,11 +467,20 @@ static void update_animation(Player *player, float dt)
     UpdateModelAnimationEx(player->model, previous, player->previous_frame, current, player->frame, player->blend);
 }
 
+static void turn_toward(Player *player, float target, float dt)
+{
+    float delta = fmodf(target - player->facing_angle + 540.0f, 360.0f) - 180.0f;
+
+    player->facing_angle += delta * fminf(1.0f, TURN_SPEED * dt);
+}
+
 void player_update(Player *player, Level *level, float camera_yaw, bool can_move)
 {
     float dt = GetFrameTime();
 
     player->crank_requested = false;
+    turn_toward(player, player_model_angle(player->dir), dt);
+    player->squash -= player->squash * fminf(1.0f, SQUASH_RECOVER * dt);
     if (player->celebrating) {
         update_animation(player, dt);
         return;
@@ -474,9 +532,9 @@ void player_draw(const Player *player)
     axis.z = 0.0f;
 
     Vector3 scale;
-    scale.x = PLAYER_SCALE;
-    scale.y = PLAYER_SCALE;
-    scale.z = PLAYER_SCALE;
+    scale.x = PLAYER_SCALE * (1.0f + player->squash * 0.5f);
+    scale.y = PLAYER_SCALE * (1.0f - player->squash);
+    scale.z = PLAYER_SCALE * (1.0f + player->squash * 0.5f);
 
     Vector3 shadow_position;
     shadow_position.x = position.x;
@@ -485,8 +543,7 @@ void player_draw(const Player *player)
     Color shadow_color = Fade(BLACK, 0.3f);
     DrawCylinder(shadow_position, 0.25f, 0.25f, 0.005f, 16, shadow_color);
 
-    float angle = player_model_angle(player->dir);
-    DrawModelEx(player->model, position, axis, angle, scale, WHITE);
+    DrawModelEx(player->model, position, axis, player->facing_angle, scale, WHITE);
 }
 
 bool player_pushing(const Player *player)
@@ -499,6 +556,7 @@ void player_board_rocket(Player *player, Vector3 start, Direction dir)
     player->celebrating = true;
     player->lean = 0.0f;
     player->dir = dir;
+    player->facing_angle = player_model_angle(dir);
     player->position = start;
     player_set_anim(player, ANIM_ROCKET_LAUNCH);
     player->frame = 0.0f;

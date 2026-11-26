@@ -55,6 +55,9 @@ typedef struct {
     PlayerAnim bump_anim;
     float bump_lock;
     bool just_arrived;
+    float facing_angle;
+    float speed_factor;
+    float squash;
 } Player;
 
 Player player_load(int x, int y, int z, Direction dir);

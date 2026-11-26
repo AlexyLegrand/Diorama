@@ -8,4 +8,3 @@ cloud_medium        -9    -7    15   1.0    0
 cloud_small         10    -9    -9   1.0   30
 cloud_small         -6    -9    -9   0.8   80
 bird                 0     6     0   1.0    0
-rainbow              0    -6   -26   1.4    0

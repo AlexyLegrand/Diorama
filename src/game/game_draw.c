@@ -11,6 +11,8 @@
 #include "render/title_logo.h"
 #include "render/rocket.h"
 #include "render/collectible.h"
+#include "render/dust.h"
+#include "render/postfx.h"
 #include "entities/player.h"
 #include "ui/ui.h"
 #include "core/i18n.h"
@@ -19,6 +21,8 @@
 static const int FPS_MARGIN = 20;
 static const int FPS_WIDTH = 100;
 static const float PAUSE_SHADE = 0.45f;
+static const float TITLE_BLUR = 0.0f;
+static const float GAME_BLUR = 1.0f;
 static const float ROCKET_FLOOR_OFFSET = 0.5f;
 static const float COLLECTIBLE_PHASE = 0.7f;
 static const int LOADING_FONT_SIZE = 30;
@@ -98,6 +102,7 @@ static void draw_scene(Game *g, bool in_menu, Camera3D camera)
     } else {
         draw_world(&g->level, &g->player, &g->crank, !g->launch_done);
         draw_collectibles(g);
+        dust_draw();
     }
     if (!in_menu && scene == STATE_MAP) {
         ui_draw_entrances(&g->level, game_completed(g));
@@ -185,11 +190,14 @@ void game_draw(Game *g)
 
     lighting_update(camera.position);
     BeginDrawing();
+    postfx_set_blur(in_menu ? TITLE_BLUR : GAME_BLUR);
+    postfx_begin();
     sky_draw_background();
     BeginMode3D(camera);
     draw_scene(g, in_menu, camera);
     EndMode3D();
     sky_draw_vignette();
+    postfx_end();
     game_apply_menu_anchor(g);
     draw_overlay(g, camera);
     draw_transition(g);

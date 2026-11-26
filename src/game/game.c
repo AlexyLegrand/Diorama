@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "raylib.h"
+#include "raymath.h"
 #include "game/game.h"
 #include "game/game_internal.h"
 #include "core/settings.h"
@@ -12,6 +13,8 @@
 #include "render/title_logo.h"
 #include "render/rocket.h"
 #include "render/collectible.h"
+#include "render/dust.h"
+#include "render/postfx.h"
 #include "core/sfx.h"
 #include "ui/ui.h"
 #include "ui/settings_menu.h"
@@ -26,6 +29,8 @@ static const char *WIND_PATH = "assets/music/world/ambience_wind.mp3";
 static const float WIND_VOLUME = 0.4f;
 static const float ROCKET_BOARD_DISTANCE = 0.7f;
 static const int LIVES_START = 3;
+static const float CAMERA_FOLLOW_WEIGHT = 0.35f;
+static const float CAMERA_FOLLOW_SPEED = 3.0f;
 static const double ENTRANCE_SOUND_COOLDOWN = 0.5;
 static const float FADE_OUT_DURATION = 1.0f;
 static const float FADE_HOLD_DURATION = 0.4f;
@@ -48,6 +53,7 @@ static bool start_level(const char *path, Level *level, Player *player, OrbitCam
     *level = loaded;
     player_place(player, level->start_x, level->start_y, level->start_z);
     orbit->target = level_center(level);
+    dust_clear();
     orbit_camera_fit(orbit, (Vector3){ (float)level->width, (float)level->height, (float)level->depth });
     block_render_reward_reset();
     crank->active = false;
@@ -192,6 +198,15 @@ static void collect_under_player(Game *g)
     }
 }
 
+static void follow_player(Game *g)
+{
+    Vector3 center = level_center(&g->level);
+    Vector3 wanted = Vector3Lerp(center, g->player.position, CAMERA_FOLLOW_WEIGHT);
+    float t = 1.0f - expf(-CAMERA_FOLLOW_SPEED * GetFrameTime());
+
+    g->orbit.target = Vector3Lerp(g->orbit.target, wanted, t);
+}
+
 static void update_world(Game *g)
 {
     if (g->state != STATE_WON) {
@@ -199,6 +214,8 @@ static void update_world(Game *g)
     }
     float camera_yaw = orbit_camera_snapped_yaw(&g->orbit);
     player_update(&g->player, &g->level, camera_yaw, !g->crank.active);
+    follow_player(g);
+    dust_update(GetFrameTime());
     if (g->player.crank_requested) {
         GridPos player_cell = { g->player.x, g->player.y, g->player.z };
         if (crank_start(&g->crank, &g->level, player_cell)) {
@@ -235,6 +252,7 @@ static void unload_assets(void)
     ui_unload_hud();
     rocket_unload();
     collectible_unload();
+    postfx_unload();
     sfx_unload();
     backdrop_assets_unload();
     vegetation_unload();
@@ -304,6 +322,7 @@ bool game_init(Game *g)
     ui_load_hud();
     rocket_load();
     collectible_load();
+    postfx_load();
     sfx_load();
     vegetation_load();
     backdrop_assets_load();

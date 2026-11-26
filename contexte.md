@@ -110,6 +110,12 @@ En plus des niveaux : une **carte** par monde, reliées par des portails, et une
 - Décor de ciel propre à chaque niveau (fichier `.sky`) : mer de nuages, soleil, nuages,
   îles flottantes, arc-en-ciel, oiseaux.
 - Éclairage et ombrage des blocs.
+- Post-traitement (`src/render/postfx.c`) : la scène 3D passe par un shader qui applique l'**effet maquette**
+  (*tilt-shift* : haut et bas de l'écran flous, bande centrale nette), un étalonnage (saturation, contraste,
+  ombres légèrement froides et lumières chaudes) et un anticrénelage FXAA. Pas de flou sur l'écran titre
+  pour garder le logo lisible. Le HUD et les menus restent nets.
+- Fluidité : rotation douce de Sprout, départ progressif et ralenti en fin de marche, caméra qui suit Sprout,
+  poussière aux pas et à l'atterrissage, léger écrasement à l'arrivée sur un autre étage.
 - Logo 3D (`assets/logo/logo.glb`) posé au-dessus de l'île de l'écran titre, éclairé comme le décor.
 - Fusée (`assets/rocket/rocket.glb`) animée avec feu et fumée pour voyager entre les mondes ;
   Sprout a une animation dédiée pour y monter et décoller.
